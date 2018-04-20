@@ -153,7 +153,7 @@ instance Bifoldable DocH where
 
 instance Bitraversable DocH where
   bitraverse _ _ DocEmpty = pure DocEmpty
-  bitraverse f g (DocAppend docA docB) = DocAppend <$> bitraverse f g docA <*> bitraverse f g docB
+  bitraverse f g (DocAppend docA docB) = (\a b -> DocAppend a b) <$> bitraverse f g docA <*> bitraverse f g docB
   bitraverse _ _ (DocString s) = pure (DocString s)
   bitraverse f g (DocParagraph doc) = DocParagraph <$> bitraverse f g doc
   bitraverse _ g (DocIdentifier i) = DocIdentifier <$> g i

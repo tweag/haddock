@@ -244,38 +244,39 @@ data RenameEnv name = RenameEnv
   }
 
 
-renameType :: HsType GhcRn -> Rename (IdP GhcRn) (HsType GhcRn)
-renameType (HsForAllTy x bndrs lt) =
-    HsForAllTy x
+renameType :: (Eq (IdP name), SetName (IdP name))
+           => HsType name -> Rename (IdP name) (HsType name)
+renameType (HsForAllTy bndrs lt) =
+    (\a b -> HsForAllTy a b)
         <$> mapM (located renameBinder) bndrs
         <*> renameLType lt
-renameType (HsQualTy x lctxt lt) =
-    HsQualTy x
+renameType (HsQualTy lctxt lt) =
+    (\a b -> HsQualTy a b)
         <$> located renameContext lctxt
         <*> renameLType lt
-renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
-renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
-renameType (HsFunTy x la lr) = HsFunTy x <$> renameLType la <*> renameLType lr
-renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
-renameType (HsPArrTy x lt) = HsPArrTy x <$> renameLType lt
-renameType (HsTupleTy x srt lt) = HsTupleTy x srt <$> mapM renameLType lt
-renameType (HsSumTy x lt) = HsSumTy x <$> mapM renameLType lt
-renameType (HsOpTy x la lop lb) =
-    HsOpTy x <$> renameLType la <*> located renameName lop <*> renameLType lb
-renameType (HsParTy x lt) = HsParTy x <$> renameLType lt
-renameType (HsIParamTy x ip lt) = HsIParamTy x ip <$> renameLType lt
-renameType (HsEqTy x la lb) = HsEqTy x <$> renameLType la <*> renameLType lb
-renameType (HsKindSig x lt lk) = HsKindSig x <$> renameLType lt <*> pure lk
+renameType (HsTyVar ip name) = HsTyVar ip <$> located renameName name
+renameType (HsAppTy lf la) = (\ a b -> HsAppTy a b) <$> renameLType lf <*> renameLType la
+renameType (HsFunTy la w lr) = (\a b -> HsFunTy a w b) <$> renameLType la <*> renameLType lr
+renameType (HsListTy lt) = HsListTy <$> renameLType lt
+renameType (HsPArrTy lt) = HsPArrTy <$> renameLType lt
+renameType (HsTupleTy srt lt) = HsTupleTy srt <$> mapM renameLType lt
+renameType (HsSumTy lt) = HsSumTy <$> mapM renameLType lt
+renameType (HsOpTy la lop lb) =
+    (\a b c -> HsOpTy a b c) <$> renameLType la <*> located renameName lop <*> renameLType lb
+renameType (HsParTy lt) = HsParTy <$> renameLType lt
+renameType (HsIParamTy ip lt) = HsIParamTy ip <$> renameLType lt
+renameType (HsEqTy la lb) = (\a b -> HsEqTy a b) <$> renameLType la <*> renameLType lb
+renameType (HsKindSig lt lk) = (\ a b -> HsKindSig a b) <$> renameLType lt <*> pure lk
 renameType t@(HsSpliceTy _ _) = pure t
-renameType (HsDocTy x lt doc) = HsDocTy x <$> renameLType lt <*> pure doc
-renameType (HsBangTy x bang lt) = HsBangTy x bang <$> renameLType lt
-renameType t@(HsRecTy _ _) = pure t
+renameType (HsDocTy lt doc) = (\a b -> HsDocTy a b) <$> renameLType lt <*> pure doc
+renameType (HsBangTy bang lt) = HsBangTy bang <$> renameLType lt
+renameType t@(HsRecTy _) = pure t
 renameType t@(XHsType (NHsCoreTy _)) = pure t
-renameType (HsExplicitListTy x ip ltys) =
-    HsExplicitListTy x ip <$> renameLTypes ltys
-renameType (HsExplicitTupleTy x ltys) =
-    HsExplicitTupleTy x <$> renameLTypes ltys
-renameType t@(HsTyLit _ _) = pure t
+renameType (HsExplicitListTy ip ph ltys) =
+    HsExplicitListTy ip ph <$> renameLTypes ltys
+renameType (HsExplicitTupleTy phs ltys) =
+    HsExplicitTupleTy phs <$> renameLTypes ltys
+renameType t@(HsTyLit _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
 renameType (HsAppsTy _ _) = error "HsAppsTy: Only used before renaming"
 
@@ -291,11 +292,13 @@ renameLTypes = mapM renameLType
 renameContext :: HsContext GhcRn -> Rename (IdP GhcRn) (HsContext GhcRn)
 renameContext = renameLTypes
 
-renameBinder :: HsTyVarBndr GhcRn -> Rename (IdP GhcRn) (HsTyVarBndr GhcRn)
+renameBinder :: (Eq (IdP name), SetName (IdP name))
+             => HsTyVarBndr name -> Rename (IdP name) (HsTyVarBndr name)
 renameBinder (UserTyVar x lname) = UserTyVar x <$> located renameName lname
 renameBinder (KindedTyVar x lname lkind) =
-  KindedTyVar x <$> located renameName lname <*> located renameType lkind
+  (\a b -> KindedTyVar x a b) <$> located renameName lname <*> located renameType lkind
 renameBinder (XTyVarBndr _) = error "haddock:renameBinder"
+
 
 -- | Core renaming logic.
 renameName :: (Eq name, SetName name) => name -> Rename name name

@@ -386,7 +386,7 @@ modulePackageInfo :: DynFlags
 modulePackageInfo dflags flags modu =
     cmdline <|> pkgDb
   where
-    cmdline = (,) <$> optPackageName flags <*> optPackageVersion flags
+    cmdline = (\a b -> (a,b)) <$> optPackageName flags <*> optPackageVersion flags
     pkgDb = (\pkg -> (packageName pkg, packageVersion pkg)) <$> lookupPackage dflags (moduleUnitId modu)
 
 

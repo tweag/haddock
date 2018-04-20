@@ -154,12 +154,12 @@ renameExportItems = mapM renameExportItem
 
 renameDocForDecl :: DocForDecl Name -> RnM (DocForDecl DocName)
 renameDocForDecl (doc, fnArgsDoc) =
-  (,) <$> renameDocumentation doc <*> renameFnArgsDoc fnArgsDoc
+  (\a b -> (a,b)) <$> renameDocumentation doc <*> renameFnArgsDoc fnArgsDoc
 
 
 renameDocumentation :: Documentation Name -> RnM (Documentation DocName)
 renameDocumentation (Documentation mDoc mWarning) =
-  Documentation <$> mapM renameDoc mDoc <*> mapM renameDoc mWarning
+  (\a b -> Documentation a b) <$> mapM renameDoc mDoc <*> mapM renameDoc mWarning
 
 
 renameLDocHsSyn :: LHsDocString -> RnM LHsDocString
@@ -300,7 +300,7 @@ renameInstHead InstHead {..} = do
   cname <- rename ihdClsName
   types <- mapM renameType ihdTypes
   itype <- case ihdInstType of
-    ClassInst { .. } -> ClassInst
+    ClassInst { .. } -> (\a b c d -> ClassInst a b c d)
         <$> mapM renameType clsiCtx
         <*> renameLHsQTyVars clsiTyVars
         <*> mapM renameSig clsiSigs
@@ -410,7 +410,7 @@ renameFamilyDecl (XFamilyDecl _) = panic "renameFamilyDecl"
 
 renamePseudoFamilyDecl :: PseudoFamilyDecl GhcRn
                        -> RnM (PseudoFamilyDecl DocNameI)
-renamePseudoFamilyDecl (PseudoFamilyDecl { .. }) =  PseudoFamilyDecl
+renamePseudoFamilyDecl (PseudoFamilyDecl { .. }) =  (\a b c d -> PseudoFamilyDecl a b c d)
     <$> renameFamilyInfo pfdInfo
     <*> renameL pfdLName
     <*> mapM renameLType pfdTyVars

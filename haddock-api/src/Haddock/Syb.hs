@@ -47,7 +47,7 @@ everythingButType ::
   => (r -> r -> r)
   -> (forall a. Data a => a -> r)
   -> (forall a. Data a => a -> r)
-everythingButType k f = everythingBut k $ (,) <$> f <*> isType @t
+everythingButType k f = everythingBut k $ (\a b -> (a,b)) <$> f <*> isType @t
 
 -- | Perform a query with state on each level of a tree.
 --

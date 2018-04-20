@@ -209,7 +209,7 @@ moduleName :: Parser (DocH mod a)
 moduleName = DocModule <$> (char '"' *> modid <* char '"')
   where
     modid = intercalate "." <$> conid `sepBy1` "."
-    conid = (:)
+    conid = (\a b -> (a :b))
       <$> satisfy isAsciiUpper
       -- NOTE: According to Haskell 2010 we should actually only
       -- accept {small | large | digit | ' } here.  But as we can't
@@ -378,7 +378,7 @@ moreListItems indent item = (,) [] . Right <$> indentedItem
 -- a line of text and attempts to parse more list content with 'more'.
 moreContent :: Monoid a => BS.ByteString -> Parser a
             -> Parser ([String], Either (DocH mod Identifier) a)
-moreContent indent item = first . (:) <$> nonEmptyLine <*> more indent item
+moreContent indent item = first . (\a b -> (a:b)) <$> nonEmptyLine <*> more indent item
 
 -- | Parses an indented paragraph.
 -- The indentation is 4 spaces.
@@ -459,7 +459,7 @@ examples = DocExamples <$> (many (skipHorizontalSpace *> "\n") *> go)
             moreExamples = (,) [] <$> go
 
             result :: Parser ([String], [Example])
-            result = first . (:) <$> nonEmptyLine <*> resultAndMoreExamples
+            result = first . (\a b -> (a:b)) <$> nonEmptyLine <*> resultAndMoreExamples
 
     makeExample :: String -> String -> [String] -> Example
     makeExample prefix expression res =
