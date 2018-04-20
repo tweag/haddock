@@ -63,6 +63,8 @@ import BasicTypes ( StringLiteral(..), SourceText(..) )
 import qualified Outputable as O
 import HsDecls ( getConArgs )
 
+import Weight
+
 
 -- | Use a 'TypecheckedModule' to produce an 'Interface'.
 -- To do this, we need access to already processed modules in the topological
@@ -467,8 +469,8 @@ subordinates instMap decl = case decl of
 -- | Extract constructor argument docs from inside constructor decls.
 conArgDocs :: ConDecl GhcRn -> Map Int HsDocString
 conArgDocs con = case getConArgs con of
-                   PrefixCon args -> go 0 (map unLoc args ++ ret)
-                   InfixCon arg1 arg2 -> go 0 ([unLoc arg1, unLoc arg2] ++ ret)
+                   PrefixCon args -> go 0 (map (unLoc . weightedThing) args ++ ret)
+                   InfixCon arg1 arg2 -> go 0 ([unLoc (weightedThing arg1), unLoc (weightedThing arg2)] ++ ret)
                    RecCon _ -> go 1 ret
   where
     go n (HsDocTy _ _ (L _ ds) : tys) = M.insert n ds $ go (n+1) tys
@@ -494,8 +496,8 @@ typeDocs = go 0
   where
     go n (HsForAllTy { hst_body = ty }) = go n (unLoc ty)
     go n (HsQualTy   { hst_body = ty }) = go n (unLoc ty)
-    go n (HsFunTy _ (L _ (HsDocTy _ _ (L _ x))) (L _ ty)) = M.insert n x $ go (n+1) ty
-    go n (HsFunTy _ _ ty) = go (n+1) (unLoc ty)
+    go n (HsFunTy _ (L _ (HsDocTy _ _ (L _ x))) _w (L _ ty)) = M.insert n x $ go (n+1) ty
+    go n (HsFunTy _ _ _ ty) = go (n+1) (unLoc ty)
     go n (HsDocTy _ _ (L _ doc)) = M.singleton n doc
     go _ _ = M.empty
 
@@ -1088,9 +1090,9 @@ extractPatternSyn nm t tvs cons =
   extract con =
     let args =
           case getConArgs con of
-            PrefixCon args' -> args'
+            PrefixCon args' -> (map weightedThing args')
             RecCon (L _ fields) -> cd_fld_type . unLoc <$> fields
-            InfixCon arg1 arg2 -> [arg1, arg2]
+            InfixCon arg1 arg2 -> map weightedThing [arg1, arg2]
         typ = longArrow args (data_ty con)
         typ' =
           case con of
@@ -1099,8 +1101,9 @@ extractPatternSyn nm t tvs cons =
         typ'' = noLoc (HsQualTy noExt (noLoc []) typ')
     in PatSynSig noExt [noLoc nm] (mkEmptyImplicitBndrs typ'')
 
-  longArrow :: [LHsType GhcRn] -> LHsType GhcRn -> LHsType GhcRn
-  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x y)) output inputs
+  -- MattP: Check
+  longArrow :: [LHsType name] -> LHsType name -> LHsType name
+  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x Omega y)) output inputs
 
   data_ty con
     | ConDeclGADT{} <- con = con_res_ty con
@@ -1113,7 +1116,8 @@ extractRecSel _ _ _ [] = error "extractRecSel: selector not found"
 extractRecSel nm t tvs (L _ con : rest) =
   case getConArgs con of
     RecCon (L _ fields) | ((l,L _ (ConDeclField _ _nn ty _)) : _) <- matching_fields fields ->
-      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt data_ty (getBangType ty)))))
+      -- MattP: Check
+      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt data_ty Omega (getBangType ty)))))
     _ -> extractRecSel nm t tvs rest
  where
   matching_fields :: [LConDeclField GhcRn] -> [(SrcSpan, LConDeclField GhcRn)]

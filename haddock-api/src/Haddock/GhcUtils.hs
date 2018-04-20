@@ -31,6 +31,8 @@ import GHC
 import Class
 import DynFlags
 
+import Weight
+
 
 moduleString :: Module -> String
 moduleString = moduleNameString . moduleName
@@ -182,13 +184,12 @@ getGADTConType (ConDeclGADT { con_forall = has_forall
             = noLoc (HsQualTy { hst_xqual = NoExt, hst_ctxt = theta, hst_body = tau_ty })
             | otherwise
             = tau_ty
-
+   -- MattP: TODO
+   mk_fun_ty a b = nlHsFunTy noExt a Omega b
    tau_ty = case args of
-              RecCon flds -> noLoc (HsFunTy noExt (noLoc (HsRecTy noExt (unLoc flds))) res_ty)
-              PrefixCon pos_args -> foldr mkFunTy res_ty pos_args
-              InfixCon arg1 arg2 -> arg1 `mkFunTy` (arg2 `mkFunTy` res_ty)
-
-   mkFunTy a b = noLoc (HsFunTy noExt a b)
+              RecCon flds -> noLoc (HsFunTy (noLoc (HsRecTy (unLoc flds))) Omega res_ty)
+              PrefixCon pos_args -> foldr mk_fun_ty res_ty (map weightedThing pos_args)
+              InfixCon arg1 arg2 -> (weightedThing arg1) `mk_fun_ty` ((weightedThing arg2) `mk_fun_ty` res_ty)
 
 getGADTConType (ConDeclH98 {}) = panic "getGADTConType"
   -- Should only be called on ConDeclGADT

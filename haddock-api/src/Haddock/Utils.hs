@@ -88,6 +88,8 @@ import qualified System.Posix.Internals
 
 import MonadUtils ( MonadIO(..) )
 
+import Weight
+
 
 --------------------------------------------------------------------------------
 -- * Logging
@@ -200,7 +202,7 @@ restrictCons names decls = [ L p d | L p (Just d) <- map (fmap keep) decls ]
         field_avail (L _ (ConDeclField _ fs _ _))
             = all (\f -> extFieldOcc (unLoc f) `elem` names) fs
         field_avail (L _ (XConDeclField _)) = panic "haddock:field_avail"
-        field_types flds = [ t | ConDeclField _ _ t _ <- flds ]
+        field_types flds = [ unrestricted t | ConDeclField _ _ t _ <- flds ]
 
     keep _ = Nothing
 

@@ -49,6 +49,8 @@ import VarSet
 import Haddock.Types
 import Haddock.Interface.Specialize
 
+import Weight
+
 
 
 -- the main function here! yay!
@@ -153,13 +155,7 @@ synifyTyCon _coax tc
              , tcdTyVars =       -- tyConTyVars doesn't work on fun/prim, but we can make them up:
                          let mk_hs_tv realKind fakeTyVar
                                 = noLoc $ KindedTyVar noExt (noLoc (getName fakeTyVar))
-                                                      (synifyKindSig realKind)
-                         in HsQTvs { hsq_ext =
-                                       HsQTvsRn { hsq_implicit = []   -- No kind polymorphism
-                                                , hsq_dependent = emptyNameSet }
-                                   , hsq_explicit = zipWith mk_hs_tv (fst (splitFunTys (tyConKind tc)))
-                                                                alphaTyVars --a, b, c... which are unfortunately all kind *
-                                   }
+                                                      (synifyKindSig (weightedThing realKind))
 
            , tcdFixity = Prefix
 
@@ -294,7 +290,7 @@ synifyDataCon use_gadt_syntax dc =
 
   linear_tys =
     zipWith (\ty bang ->
-               let tySyn = synifyType WithinType ty
+               let tySyn = (synifyType WithinType) (weightedThing ty) -- MattP: Check
                in case bang of
                     (HsSrcBang _ NoSrcUnpack NoSrcStrict) -> tySyn
                     bang' -> noLoc $ HsBangTy noExt bang' tySyn)
@@ -307,9 +303,9 @@ synifyDataCon use_gadt_syntax dc =
   hs_arg_tys = case (use_named_field_syntax, use_infix_syntax) of
           (True,True) -> Left "synifyDataCon: contradiction!"
           (True,False) -> return $ RecCon (noLoc field_tys)
-          (False,False) -> return $ PrefixCon linear_tys
+          (False,False) -> return $ PrefixCon (map unrestricted linear_tys)
           (False,True) -> case linear_tys of
-                           [a,b] -> return $ InfixCon a b
+                           [a,b] -> return $ InfixCon (unrestricted a) (unrestricted b)
                            _ -> Left "synifyDataCon: infix with non-2 args?"
  -- finally we get synifyDataCon's result!
  in hs_arg_tys >>=
@@ -499,10 +495,10 @@ synifyType _ (AppTy t1 t2) = let
   s1 = synifyType WithinType t1
   s2 = synifyType WithinType t2
   in noLoc $ HsAppTy noExt s1 s2
-synifyType _ (FunTy t1 t2) = let
+synifyType _ (FunTy w t1 t2) = let
   s1 = synifyType WithinType t1
   s2 = synifyType WithinType t2
-  in noLoc $ HsFunTy noExt s1 s2
+  in noLoc $ HsFunTy noExt s1 w s2
 synifyType s forallty@(ForAllTy _tv _ty) =
   let (tvs, ctx, tau) = tcSplitSigmaTy forallty
       sPhi = HsQualTy { hst_ctxt = synifyCtx ctx

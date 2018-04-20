@@ -38,8 +38,11 @@ import Control.Monad
 import Data.Maybe
 import Data.List
 import Prelude hiding ((<>))
+import Weight
 
 import Haddock.Doc (combineDocumentation)
+
+--TODO: MattP - Linearity not taken into account
 
 -- import Debug.Trace
 
@@ -413,13 +416,13 @@ ppSubSigLike unicode typ argDocs subdocs leader = do_args 0 leader typ
       = (decltt leader, ppLContextNoArrow lctxt unicode <+> nl)
         : do_largs n (darrow unicode) ltype
 
-    do_args n leader (HsFunTy _ (L _ (HsRecTy _ fields)) r)
+    do_args n leader (HsFunTy _ (L _ (HsRecTy fields)) _w r)
       = [ (decltt ldr, latex <+> nl)
         | (L _ field, ldr) <- zip fields (leader <+> gadtOpen : repeat gadtComma)
         , let latex = ppSideBySideField subdocs unicode field
         ]
         ++ do_largs (n+1) (gadtEnd <+> arrow unicode) r
-    do_args n leader (HsFunTy _ lt r)
+    do_args n leader (HsFunTy _ lt _w r)
       = (decltt leader, decltt (ppLFunLhType unicode lt) <-> arg_doc n <+> nl)
         : do_largs (n+1) (arrow unicode) r
     do_args n leader t
@@ -635,7 +638,7 @@ ppDataDecl pats instances subdocs doc dataDecl unicode =
 
     patternBit
       | null pats = Nothing
-      | otherwise = Just $ 
+      | otherwise = Just $
           text "\\enspace" <+> emph (text "Bundled Patterns") <> text "\\par" $$
           text "\\haddockbeginconstrs" $$
           vcat [ empty <-> ppSideBySidePat lnames typ d unicode
@@ -696,7 +699,7 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
           | hasArgDocs -> header_ <+> ppOcc
           | otherwise -> hsep [ header_
                               , ppOcc
-                              , hsep (map (ppLParendType unicode) args)
+                              , hsep (map ((ppLParendType unicode) . weightedThing) args)
                               ]
 
         -- Record constructor, e.g. 'Identity { runIdentity :: a }'
@@ -706,9 +709,9 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
         InfixCon arg1 arg2
           | hasArgDocs -> header_ <+> ppOcc
           | otherwise -> hsep [ header_
-                              , ppLParendType unicode arg1
+                              , ppLParendType unicode (weightedThing arg1)
                               , ppOccInfix
-                              , ppLParendType unicode arg2
+                              , ppLParendType unicode (weightedThing arg2)
                               ]
 
       ConDeclGADT{}
@@ -728,10 +731,10 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
         (_, RecCon (L _ fields))             -> doRecordFields fields
 
         -- Any GADT or a regular H98 prefix data constructor
-        (_, PrefixCon args)     | hasArgDocs -> doConstrArgsWithDocs args
+        (_, PrefixCon args)     | hasArgDocs -> doConstrArgsWithDocs (map weightedThing args)
 
         -- An infix H98 data constructor
-        (_, InfixCon arg1 arg2) | hasArgDocs -> doConstrArgsWithDocs [arg1,arg2]
+        (_, InfixCon arg1 arg2) | hasArgDocs -> doConstrArgsWithDocs (map weightedThing [arg1,arg2])
 
         _ -> empty
 
@@ -964,7 +967,7 @@ ppr_mono_ty ctxt_prec (HsQualTy _ ctxt ty) unicode
 ppr_mono_ty _         (HsBangTy _ b ty)     u = ppBang b <> ppLParendType u ty
 ppr_mono_ty _         (HsTyVar _ NotPromoted (L _ name)) _ = ppDocName name
 ppr_mono_ty _         (HsTyVar _ Promoted    (L _ name)) _ = char '\'' <> ppDocName name
-ppr_mono_ty ctxt_prec (HsFunTy _ ty1 ty2)   u = ppr_fun_ty ctxt_prec ty1 ty2 u
+ppr_mono_ty ctxt_prec (HsFunTy _ ty1 w ty2)   u = ppr_fun_ty ctxt_prec ty1 w ty2 u
 ppr_mono_ty _         (HsTupleTy _ con tys) u = tupleParens con (map (ppLType u) tys)
 ppr_mono_ty _         (HsSumTy _ tys) u       = sumParens (map (ppLType u) tys)
 ppr_mono_ty _         (HsKindSig _ ty kind) u = parens (ppr_mono_lty pREC_TOP ty u <+> dcolon u <+> ppLKind u kind)

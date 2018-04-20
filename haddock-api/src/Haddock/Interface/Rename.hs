@@ -229,10 +229,10 @@ renameType t = case t of
     b' <- renameLType b
     return (HsAppTy NoExt a' b')
 
-  HsFunTy _ a b -> do
+  HsFunTy _ a w b -> do
     a' <- renameLType a
     b' <- renameLType b
-    return (HsFunTy NoExt a' b')
+    return (HsFunTy NoExt a' w b')
 
   HsListTy _ ty -> return . (HsListTy NoExt) =<< renameLType ty
   HsPArrTy _ ty -> return . (HsPArrTy NoExt) =<< renameLType ty
@@ -469,10 +469,12 @@ renameDetails :: HsConDeclDetails GhcRn -> RnM (HsConDeclDetails DocNameI)
 renameDetails (RecCon (L l fields)) = do
   fields' <- mapM renameConDeclFieldField fields
   return (RecCon (L l fields'))
-renameDetails (PrefixCon ps) = return . PrefixCon =<< mapM renameLType ps
+                               -- This causes an assertion failure
+--renameDetails (PrefixCon ps) = -- return . PrefixCon =<< mapM (_renameLType) ps
+renameDetails (PrefixCon ps) = return . PrefixCon =<< mapM (traverse renameLType) ps
 renameDetails (InfixCon a b) = do
-  a' <- renameLType a
-  b' <- renameLType b
+  a' <- traverse renameLType a
+  b' <- traverse renameLType b
   return (InfixCon a' b')
 
 renameConDeclFieldField :: LConDeclField GhcRn -> RnM (LConDeclField DocNameI)

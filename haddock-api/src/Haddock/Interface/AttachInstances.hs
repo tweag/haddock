@@ -174,13 +174,13 @@ instHead (_, _, cls, args)
 argCount :: Type -> Int
 argCount (AppTy t _)     = argCount t + 1
 argCount (TyConApp _ ts) = length ts
-argCount (FunTy _ _ )    = 2
+argCount (FunTy _ _ _ )    = 2
 argCount (ForAllTy _ t)  = argCount t
 argCount (CastTy t _)    = argCount t
 argCount _ = 0
 
 simplify :: Type -> SimpleType
-simplify (FunTy t1 t2)  = SimpleType funTyConName [simplify t1, simplify t2]
+simplify (FunTy w t1 t2)  = SimpleType (funTyConName w) [simplify t1, simplify t2]
 simplify (ForAllTy _ t) = simplify t
 simplify (AppTy t1 t2) = SimpleType s (ts ++ maybeToList (simplify_maybe t2))
   where (SimpleType s ts) = simplify t1
@@ -201,11 +201,11 @@ instFam FamInst { fi_fam = n, fi_tys = ts, fi_rhs = t }
   = (map argCount ts, n, map simplify ts, argCount t, simplify t)
 
 
-funTyConName :: Name
-funTyConName = mkWiredInName gHC_PRIM
+funTyConName :: Rig -> Name
+funTyConName w = mkWiredInName gHC_PRIM
                         (mkOccNameFS tcName FSLIT("(->)"))
                         funTyConKey
-                        (ATyCon funTyCon)       -- Relevant TyCon
+                        (ATyCon (funTyCon w))       -- Relevant TyCon
                         BuiltInSyntax
 
 --------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ isTypeHidden expInfo = typeHidden
       case t of
         TyVarTy {} -> False
         AppTy t1 t2 -> typeHidden t1 || typeHidden t2
-        FunTy t1 t2 -> typeHidden t1 || typeHidden t2
+        FunTy _ t1 t2 -> typeHidden t1 || typeHidden t2
         TyConApp tcon args -> nameHidden (getName tcon) || any typeHidden args
         ForAllTy bndr ty -> typeHidden (tyVarKind (binderVar bndr)) || typeHidden ty
         LitTy _ -> False
