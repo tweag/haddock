@@ -416,7 +416,7 @@ ppSubSigLike unicode typ argDocs subdocs leader = do_args 0 leader typ
       = (decltt leader, ppLContextNoArrow lctxt unicode <+> nl)
         : do_largs n (darrow unicode) ltype
 
-    do_args n leader (HsFunTy _ (L _ (HsRecTy fields)) _w r)
+    do_args n leader (HsFunTy _ (L _ (HsRecTy _ fields)) _w r)
       = [ (decltt ldr, latex <+> nl)
         | (L _ field, ldr) <- zip fields (leader <+> gadtOpen : repeat gadtComma)
         , let latex = ppSideBySideField subdocs unicode field
@@ -967,7 +967,7 @@ ppr_mono_ty ctxt_prec (HsQualTy _ ctxt ty) unicode
 ppr_mono_ty _         (HsBangTy _ b ty)     u = ppBang b <> ppLParendType u ty
 ppr_mono_ty _         (HsTyVar _ NotPromoted (L _ name)) _ = ppDocName name
 ppr_mono_ty _         (HsTyVar _ Promoted    (L _ name)) _ = char '\'' <> ppDocName name
-ppr_mono_ty ctxt_prec (HsFunTy _ ty1 w ty2)   u = ppr_fun_ty ctxt_prec ty1 w ty2 u
+ppr_mono_ty ctxt_prec (HsFunTy _ ty1 _w ty2)   u = ppr_fun_ty ctxt_prec ty1 ty2 u
 ppr_mono_ty _         (HsTupleTy _ con tys) u = tupleParens con (map (ppLType u) tys)
 ppr_mono_ty _         (HsSumTy _ tys) u       = sumParens (map (ppLType u) tys)
 ppr_mono_ty _         (HsKindSig _ ty kind) u = parens (ppr_mono_lty pREC_TOP ty u <+> dcolon u <+> ppLKind u kind)

@@ -1102,7 +1102,7 @@ extractPatternSyn nm t tvs cons =
     in PatSynSig noExt [noLoc nm] (mkEmptyImplicitBndrs typ'')
 
   -- MattP: Check
-  longArrow :: [LHsType name] -> LHsType name -> LHsType name
+  longArrow :: (XFunTy name ~ PlaceHolder) => [LHsType name] -> LHsType name -> LHsType name
   longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x Omega y)) output inputs
 
   data_ty con
