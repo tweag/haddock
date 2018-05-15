@@ -166,8 +166,8 @@ nubByName f ns = go emptyNameSet ns
 -- ---------------------------------------------------------------------
 
 --getGADTConType :: (ForallXType ((~) PlaceHolder) p) =>  ConDecl p -> LHsType p
-getGADTConType :: ( XForAllTy p ~ PlaceHolder, XRecTy p ~ PlaceHolder
-                  , XQualTy p ~ PlaceHolder, XFunTy p ~ PlaceHolder) => ConDecl p -> LHsType p
+getGADTConType :: ( XForAllTy p ~ NoExt, XRecTy p ~ NoExt
+                  , XQualTy p ~ NoExt, XFunTy p ~ NoExt) => ConDecl p -> LHsType p
 -- The full type of a GADT data constructor We really only get this in
 -- order to pretty-print it, and currently only in Haddock's code.  So
 -- we are cavalier about locations and extensions, hence the

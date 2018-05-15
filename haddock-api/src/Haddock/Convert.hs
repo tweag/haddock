@@ -156,11 +156,17 @@ synifyTyCon _coax tc
                          let mk_hs_tv realKind fakeTyVar
                                 = noLoc $ KindedTyVar noExt (noLoc (getName fakeTyVar))
                                                       (synifyKindSig (weightedThing realKind))
+                         in HsQTvs { hsq_ext =
+                                       HsQTvsRn { hsq_implicit = []   -- No kind polymorphism
+                                                , hsq_dependent = emptyNameSet }
+                                   , hsq_explicit = zipWith mk_hs_tv (fst (splitFunTys (tyConKind tc)))
+                                                                alphaTyVars --a, b, c... which are unfortunately all kind *
+}
 
-           , tcdFixity = Prefix
+              , tcdFixity = Prefix
 
-           , tcdDataDefn = HsDataDefn { dd_ext = noExt
-                                      , dd_ND = DataType  -- arbitrary lie, they are neither
+              , tcdDataDefn = HsDataDefn { dd_ext = noExt
+                                        , dd_ND = DataType  -- arbitrary lie, they are neither
                                                     -- algebraic data nor newtype:
                                       , dd_ctxt = noLoc []
                                       , dd_cType = Nothing
