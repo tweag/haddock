@@ -309,9 +309,9 @@ synifyDataCon use_gadt_syntax dc =
   hs_arg_tys = case (use_named_field_syntax, use_infix_syntax) of
           (True,True) -> Left "synifyDataCon: contradiction!"
           (True,False) -> return $ RecCon (noLoc field_tys)
-          (False,False) -> return $ PrefixCon (map unrestricted linear_tys)
+          (False,False) -> return $ PrefixCon (map hsUnrestricted linear_tys)
           (False,True) -> case linear_tys of
-                           [a,b] -> return $ InfixCon (unrestricted a) (unrestricted b)
+                           [a,b] -> return $ InfixCon (hsUnrestricted a) (hsUnrestricted b)
                            _ -> Left "synifyDataCon: infix with non-2 args?"
  -- finally we get synifyDataCon's result!
  in hs_arg_tys >>=
@@ -504,7 +504,8 @@ synifyType _ (AppTy t1 t2) = let
 synifyType _ (FunTy w t1 t2) = let
   s1 = synifyType WithinType t1
   s2 = synifyType WithinType t2
-  in noLoc $ HsFunTy noExt s1 w s2
+  w'  = synifyRig w
+  in noLoc $ HsFunTy noExt s1 w' s2
 synifyType s forallty@(ForAllTy _tv _ty) =
   let (tvs, ctx, tau) = tcSplitSigmaTy forallty
       sPhi = HsQualTy { hst_ctxt = synifyCtx ctx
@@ -520,6 +521,18 @@ synifyType s forallty@(ForAllTy _tv _ty) =
 synifyType _ (LitTy t) = noLoc $ HsTyLit noExt $ synifyTyLit t
 synifyType s (CastTy t _) = synifyType s t
 synifyType _ (CoercionTy {}) = error "synifyType:Coercion"
+
+synifyRig :: Rig -> HsRig GhcRn
+synifyRig t = case t of
+                Zero -> HsZero
+                One  -> HsOne
+                Omega -> HsOmega
+                RigVar i -> HsRigVar (getName i)
+                RigAdd r1 r2 -> error "synifyRig"
+                RigMul r1 r2 -> error "synifyRig"
+                RigTy ty -> HsRigTy (synifyType WithinType ty)
+
+
 
 synifyPatSynType :: PatSyn -> LHsType GhcRn
 synifyPatSynType ps = let

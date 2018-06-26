@@ -187,12 +187,12 @@ getGADTConType (ConDeclGADT { con_forall = has_forall
             = tau_ty
    -- MattP: TODO
 --   mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy a Omega b
+   mk_fun_ty a b = nlHsFunTy a HsOmega b
 --   tau_ty :: LHsType DocNameI
    tau_ty = case args of
               RecCon flds ->  mk_fun_ty (noLoc (HsRecTy noExt (unLoc flds))) res_ty
-              PrefixCon pos_args -> foldr mk_fun_ty res_ty (map weightedThing pos_args)
-              InfixCon arg1 arg2 -> (weightedThing arg1) `mk_fun_ty` ((weightedThing arg2) `mk_fun_ty` res_ty)
+              PrefixCon pos_args -> foldr mk_fun_ty res_ty (map hsThing pos_args)
+              InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
 
 getGADTConType (ConDeclH98 {}) = panic "getGADTConType"
   -- Should only be called on ConDeclGADT

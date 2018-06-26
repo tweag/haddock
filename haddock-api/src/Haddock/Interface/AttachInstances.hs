@@ -180,7 +180,7 @@ argCount (CastTy t _)    = argCount t
 argCount _ = 0
 
 simplify :: Type -> SimpleType
-simplify (FunTy w t1 t2)  = SimpleType (funTyConName w) [simplify t1, simplify t2]
+simplify (FunTy w t1 t2)  = SimpleType funTyConName [simplify t1, simplify t2]
 simplify (ForAllTy _ t) = simplify t
 simplify (AppTy t1 t2) = SimpleType s (ts ++ maybeToList (simplify_maybe t2))
   where (SimpleType s ts) = simplify t1
@@ -201,11 +201,11 @@ instFam FamInst { fi_fam = n, fi_tys = ts, fi_rhs = t }
   = (map argCount ts, n, map simplify ts, argCount t, simplify t)
 
 
-funTyConName :: Rig -> Name
-funTyConName w = mkWiredInName gHC_PRIM
+funTyConName :: Name
+funTyConName = mkWiredInName gHC_PRIM
                         (mkOccNameFS tcName FSLIT("(->)"))
                         funTyConKey
-                        (ATyCon (funTyCon w))       -- Relevant TyCon
+                        (ATyCon funTyCon)       -- Relevant TyCon
                         BuiltInSyntax
 
 --------------------------------------------------------------------------------

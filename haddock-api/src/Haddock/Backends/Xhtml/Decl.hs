@@ -834,7 +834,7 @@ ppShortConstrParts summary dataInst con unicode qual
         -- Prefix constructor, e.g. 'Just a'
         PrefixCon args ->
           ( header_ +++
-              hsep (ppOcc : map ((ppLParendType unicode qual HideEmptyContexts) . weightedThing) args)
+              hsep (ppOcc : map ((ppLParendType unicode qual HideEmptyContexts) . hsThing) args)
           , noHtml
           , noHtml
           )
@@ -850,9 +850,9 @@ ppShortConstrParts summary dataInst con unicode qual
 
         -- Infix constructor, e.g. 'a :| [a]'
         InfixCon arg1 arg2 ->
-          ( header_ +++ hsep [ ppLParendType unicode qual HideEmptyContexts (weightedThing arg1)
+          ( header_ +++ hsep [ ppLParendType unicode qual HideEmptyContexts (hsThing arg1)
                              , ppOccInfix
-                             , ppLParendType unicode qual HideEmptyContexts (weightedThing arg2)
+                             , ppLParendType unicode qual HideEmptyContexts (hsThing arg2)
                              ]
           , noHtml
           , noHtml
@@ -909,7 +909,7 @@ ppSideBySideConstr subdocs fixities unicode qual (L _ con)
         PrefixCon args
           | hasArgDocs -> header_ +++ ppOcc <+> fixity
           | otherwise -> hsep [ header_ +++ ppOcc
-                              , hsep (map ((ppLParendType unicode qual HideEmptyContexts) . weightedThing) args)
+                              , hsep (map ((ppLParendType unicode qual HideEmptyContexts) . hsThing) args)
                               , fixity
                               ]
 
@@ -919,9 +919,9 @@ ppSideBySideConstr subdocs fixities unicode qual (L _ con)
         -- Infix constructor, e.g. 'a :| [a]'
         InfixCon arg1 arg2
           | hasArgDocs -> header_ +++ ppOcc <+> fixity
-          | otherwise -> hsep [ header_ +++ ppLParendType unicode qual HideEmptyContexts (weightedThing arg1)
+          | otherwise -> hsep [ header_ +++ ppLParendType unicode qual HideEmptyContexts (hsThing arg1)
                               , ppOccInfix
-                              , ppLParendType unicode qual HideEmptyContexts (weightedThing arg2)
+                              , ppLParendType unicode qual HideEmptyContexts (hsThing arg2)
                               , fixity
                               ]
 
@@ -957,7 +957,7 @@ ppSideBySideConstr subdocs fixities unicode qual (L _ con)
     doConstrArgsWithDocs args = subFields qual $ case con of
       ConDeclH98{} ->
         [ (ppLParendType unicode qual HideEmptyContexts arg, mdoc, [])
-        | (i, arg) <- zip [0..] (map weightedThing args)
+        | (i, arg) <- zip [0..] (map hsThing args)
         , let mdoc = Map.lookup i argDocs
         ]
       ConDeclGADT{} ->

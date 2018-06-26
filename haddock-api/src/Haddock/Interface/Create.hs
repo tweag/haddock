@@ -469,8 +469,8 @@ subordinates instMap decl = case decl of
 -- | Extract constructor argument docs from inside constructor decls.
 conArgDocs :: ConDecl GhcRn -> Map Int HsDocString
 conArgDocs con = case getConArgs con of
-                   PrefixCon args -> go 0 (map (unLoc . weightedThing) args ++ ret)
-                   InfixCon arg1 arg2 -> go 0 ([unLoc (weightedThing arg1), unLoc (weightedThing arg2)] ++ ret)
+                   PrefixCon args -> go 0 (map (unLoc . hsThing) args ++ ret)
+                   InfixCon arg1 arg2 -> go 0 ([unLoc (hsThing arg1), unLoc (hsThing arg2)] ++ ret)
                    RecCon _ -> go 1 ret
   where
     go n (HsDocTy _ _ (L _ ds) : tys) = M.insert n ds $ go (n+1) tys
@@ -1090,9 +1090,9 @@ extractPatternSyn nm t tvs cons =
   extract con =
     let args =
           case getConArgs con of
-            PrefixCon args' -> (map weightedThing args')
+            PrefixCon args' -> (map hsThing args')
             RecCon (L _ fields) -> cd_fld_type . unLoc <$> fields
-            InfixCon arg1 arg2 -> map weightedThing [arg1, arg2]
+            InfixCon arg1 arg2 -> map hsThing [arg1, arg2]
         typ = longArrow args (data_ty con)
         typ' =
           case con of
@@ -1103,7 +1103,7 @@ extractPatternSyn nm t tvs cons =
 
   -- MattP: Check
   longArrow :: (XFunTy name ~ NoExt) => [LHsType name] -> LHsType name -> LHsType name
-  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x Omega y)) output inputs
+  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x HsOmega y)) output inputs
 
   data_ty con
     | ConDeclGADT{} <- con = con_res_ty con
@@ -1117,7 +1117,7 @@ extractRecSel nm t tvs (L _ con : rest) =
   case getConArgs con of
     RecCon (L _ fields) | ((l,L _ (ConDeclField _ _nn ty _)) : _) <- matching_fields fields ->
       -- MattP: Check
-      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt data_ty Omega (getBangType ty)))))
+      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt data_ty HsOmega (getBangType ty)))))
     _ -> extractRecSel nm t tvs rest
  where
   matching_fields :: [LConDeclField GhcRn] -> [(SrcSpan, LConDeclField GhcRn)]

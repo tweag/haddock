@@ -137,7 +137,7 @@ sugarTuples typ =
 sugarOperators :: NamedThing (IdP (GhcPass p)) => HsType (GhcPass p) -> HsType (GhcPass p)
 sugarOperators (HsAppTy _ (L _ (HsAppTy _ (L _ (HsTyVar _ _ (L l name))) la)) lb)
     | isSymOcc $ getOccName name' = mkHsOpTy la (L l name) lb
-    | isBuiltInSyntax name' && getOccString name == "(->)" = HsFunTy NoExt la Omega lb -- MattP: TODO
+    | isBuiltInSyntax name' && getOccString name == "(->)" = HsFunTy NoExt la HsOmega lb -- MattP: TODO
   where
     name' = getName name
 sugarOperators typ = typ
