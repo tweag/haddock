@@ -527,7 +527,6 @@ synifyRig t = case t of
                 Zero -> HsZero
                 One  -> HsOne
                 Omega -> HsOmega
-                RigVar i -> HsRigVar (getName i)
                 RigAdd r1 r2 -> error "synifyRig"
                 RigMul r1 r2 -> error "synifyRig"
                 RigTy ty -> HsRigTy (synifyType WithinType ty)

@@ -214,7 +214,6 @@ renameRig t = case t of
                 HsZero -> return HsZero
                 HsOne  -> return HsOne
                 HsOmega -> return HsOmega
-                HsRigVar p -> HsRigVar <$> rename p
                 HsRigTy lty -> HsRigTy <$> renameLType lty
 
 renameType :: HsType GhcRn -> RnM (HsType DocNameI)
