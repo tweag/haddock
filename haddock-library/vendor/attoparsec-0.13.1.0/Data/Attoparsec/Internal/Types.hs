@@ -203,13 +203,13 @@ instance Alternative (Parser i) where
 
     many v = many_v
         where many_v = some_v <|> pure []
-              some_v = (\a b -> (a:b)) App.<$> v <*> many_v
+              some_v = (:) App.<$> v <*> many_v
     {-# INLINE many #-}
 
     some v = some_v
       where
         many_v = some_v <|> pure []
-        some_v = (\a b -> (a:b)) <$> v <*> many_v
+        some_v = (:) <$> v <*> many_v
     {-# INLINE some #-}
 
 -- | A common interface for input chunks.

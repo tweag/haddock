@@ -117,7 +117,7 @@ getThemes libDir flags =
   liftM concatEither (mapM themeFlag flags) >>= someTheme
   where
     themeFlag :: Flag -> IO (Either String Themes)
-    themeFlag (Flag_CSS path) = (liftM . liftEither) ((\x -> [x])) (theme path)
+    themeFlag (Flag_CSS path) = (liftM . liftEither) (:[]) (theme path)
     themeFlag (Flag_BuiltInThemes) = builtIns
     themeFlag _ = retRight []
 

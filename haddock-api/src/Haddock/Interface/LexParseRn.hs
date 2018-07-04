@@ -90,7 +90,7 @@ rename :: DynFlags -> GlobalRdrEnv -> Doc RdrName -> ErrMsgM (Doc Name)
 rename dflags gre = rn
   where
     rn d = case d of
-      DocAppend a b -> (\a b -> DocAppend a b) <$> rn a <*> rn b
+      DocAppend a b -> DocAppend <$> rn a <*> rn b
       DocParagraph doc -> DocParagraph <$> rn doc
       DocIdentifier x -> do
         -- Generate the choices for the possible kind of thing this
@@ -130,7 +130,7 @@ rename dflags gre = rn
       DocMonospaced doc -> DocMonospaced <$> rn doc
       DocUnorderedList docs -> DocUnorderedList <$> traverse rn docs
       DocOrderedList docs -> DocOrderedList <$> traverse rn docs
-      DocDefList list -> DocDefList <$> traverse (\(a, b) -> (\c e -> (c,e)) <$> rn a <*> rn b) list
+      DocDefList list -> DocDefList <$> traverse (\(a, b) -> (,) <$> rn a <*> rn b) list
       DocCodeBlock doc -> DocCodeBlock <$> rn doc
       DocIdentifierUnchecked x -> pure (DocIdentifierUnchecked x)
       DocModule str -> pure (DocModule str)
