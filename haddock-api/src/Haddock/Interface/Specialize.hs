@@ -255,7 +255,7 @@ renameType (HsQualTy ext lctxt lt) =
         <*> renameLType lt
 renameType (HsTyVar ext ip name) = HsTyVar ext ip <$> located renameName name
 renameType (HsAppTy ext lf la) = HsAppTy ext <$> renameLType lf <*> renameLType la
-renameType (HsFunTy ext la w lr) = HsFunTy ext a w <$> renameLType la <*> renameLType lr
+renameType (HsFunTy ext la w lr) = HsFunTy ext <$> renameLType la <*> renameRig w <*> renameLType lr
 renameType (HsListTy ext lt) = HsListTy ext <$> renameLType lt
 renameType (HsPArrTy ext lt) = HsPArrTy ext <$> renameLType lt
 renameType (HsTupleTy ext srt lt) = HsTupleTy ext srt <$> mapM renameLType lt
@@ -278,6 +278,11 @@ renameType (HsExplicitTupleTy phs ltys) =
 renameType t@(HsTyLit _ _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
 renameType (HsAppsTy _ _) = error "HsAppsTy: Only used before renaming"
+
+renameRig :: HsRig GhcRn -> Rename (IdP GhcRn) (HsRig GhcRn)
+renameRig (HsRigTy t) = HsRigTy <$> renameLType t
+renameRig r = pure r
+
 
 
 renameLType :: LHsType GhcRn -> Rename (IdP GhcRn) (LHsType GhcRn)
