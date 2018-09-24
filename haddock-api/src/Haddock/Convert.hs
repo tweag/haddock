@@ -529,7 +529,7 @@ synifyRig t = case t of
                 Omega -> HsOmega
                 RigAdd r1 r2 -> error "synifyRig"
                 RigMul r1 r2 -> error "synifyRig"
-                RigTy ty -> HsRigTy (synifyType WithinType ty)
+                RigThing ty -> HsRigTy (synifyType WithinType ty)
 
 
 
