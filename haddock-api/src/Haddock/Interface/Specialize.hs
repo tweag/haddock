@@ -253,19 +253,18 @@ renameType (HsQualTy ext lctxt lt) =
     HsQualTy ext
         <$> located renameContext lctxt
         <*> renameLType lt
-renameType (HsTyVar ext ip name) = HsTyVar ext ip <$> located renameName name
-renameType (HsAppTy ext lf la) = HsAppTy ext <$> renameLType lf <*> renameLType la
-renameType (HsFunTy ext la w lr) = HsFunTy ext <$> renameLType la <*> renameRig w <*> renameLType lr
-renameType (HsListTy ext lt) = HsListTy ext <$> renameLType lt
-renameType (HsPArrTy ext lt) = HsPArrTy ext <$> renameLType lt
-renameType (HsTupleTy ext srt lt) = HsTupleTy ext srt <$> mapM renameLType lt
-renameType (HsSumTy ext lt) = HsSumTy ext <$> mapM renameLType lt
-renameType (HsOpTy ext la lop lb) =
-    HsOpTy ext <$> renameLType la <*> located renameName lop <*> renameLType lb
-renameType (HsParTy ext lt) = HsParTy ext <$> renameLType lt
-renameType (HsIParamTy ext ip lt) = HsIParamTy ext ip <$> renameLType lt
-renameType (HsEqTy ext la lb) = HsEqTy ext <$> renameLType la <*> renameLType lb
-renameType (HsKindSig ext lt lk) = HsKindSig ext <$> renameLType lt <*> pure lk
+renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
+renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
+renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameRig w <*> renameLType lr
+renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
+renameType (HsTupleTy x srt lt) = HsTupleTy x srt <$> mapM renameLType lt
+renameType (HsSumTy x lt) = HsSumTy x <$> mapM renameLType lt
+renameType (HsOpTy x la lop lb) =
+    HsOpTy x <$> renameLType la <*> located renameName lop <*> renameLType lb
+renameType (HsParTy x lt) = HsParTy x <$> renameLType lt
+renameType (HsIParamTy x ip lt) = HsIParamTy x ip <$> renameLType lt
+renameType (HsEqTy x la lb) = HsEqTy x <$> renameLType la <*> renameLType lb
+renameType (HsKindSig x lt lk) = HsKindSig x <$> renameLType lt <*> pure lk
 renameType t@(HsSpliceTy _ _) = pure t
 renameType (HsDocTy ext lt doc) = HsDocTy ext <$> renameLType lt <*> pure doc
 renameType (HsBangTy ext bang lt) = HsBangTy ext bang <$> renameLType lt
