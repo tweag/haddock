@@ -27,7 +27,7 @@ import GHC
 import OccName
 import Name                 ( nameOccName )
 import RdrName              ( rdrNameOcc )
-import FastString           ( unpackFS, unpackLitString, zString )
+import FastString           ( unpackFS )
 import Outputable           ( panic)
 
 import qualified Data.Map as Map
@@ -542,13 +542,11 @@ ppClassDecl instances doc subdocs
 
     methodTable =
       text "\\haddockpremethods{}\\textbf{Methods}" $$
-      vcat  [ ppFunSig doc names (hsSigWcType typ) unicode
+      vcat  [ ppFunSig doc [name] (hsSigWcType typ) unicode
             | L _ (TypeSig _ lnames typ) <- lsigs
-            , let doc = lookupAnySubdoc (head names) subdocs
-                  names = map unLoc lnames ]
-              -- FIXME: is taking just the first name ok? Is it possible that
-              -- there are different subdocs for different names in a single
-              -- type signature?
+            , name <- map unLoc lnames
+            , let doc = lookupAnySubdoc name subdocs
+            ]
 
     instancesBit = ppDocInstances unicode instances
 
@@ -566,14 +564,14 @@ ppDocInstances unicode (i : rest)
     (is, rest') = spanWith isUndocdInstance rest
 
 isUndocdInstance :: DocInstance a -> Maybe (InstHead a)
-isUndocdInstance (i,Nothing,_) = Just i
+isUndocdInstance (i,Nothing,_,_) = Just i
 isUndocdInstance _ = Nothing
 
 -- | Print a possibly commented instance. The instance header is printed inside
 -- an 'argBox'. The comment is printed to the right of the box in normal comment
 -- style.
 ppDocInstance :: Bool -> DocInstance DocNameI -> LaTeX
-ppDocInstance unicode (instHead, doc, _) =
+ppDocInstance unicode (instHead, doc, _, _) =
   declWithDoc (ppInstDecl unicode instHead) (fmap docToLaTeX $ fmap _doc doc)
 
 
@@ -1005,8 +1003,7 @@ ppr_mono_ty ctxt_prec (HsDocTy _ ty _) unicode
 ppr_mono_ty _ (HsWildCardTy (AnonWildCard _)) _ = char '_'
 
 ppr_mono_ty _ (HsTyLit _ t) u = ppr_tylit t u
-
-ppr_mono_ty _ (HsAppsTy {}) _ = panic "ppr_mono_ty:HsAppsTy"
+ppr_mono_ty _ (HsStarTy _ isUni) unicode = starSymbol (isUni || unicode)
 
 
 ppr_tylit :: HsTyLit -> Bool -> LaTeX
@@ -1142,7 +1139,8 @@ parLatexMarkup ppId = Markup {
   markupAName                = \_ _ -> empty,
   markupProperty             = \p _ -> quote $ verb $ text p,
   markupExample              = \e _ -> quote $ verb $ text $ unlines $ map exampleToString e,
-  markupHeader               = \(Header l h) p -> header l (h p)
+  markupHeader               = \(Header l h) p -> header l (h p),
+  markupTable                = \(Table h b) p -> table h b p
   }
   where
     header 1 d = text "\\section*" <> braces d
@@ -1150,6 +1148,8 @@ parLatexMarkup ppId = Markup {
     header l d
       | l > 0 && l <= 6 = text "\\subsubsection*" <> braces d
     header l _ = error $ "impossible header level in LaTeX generation: " ++ show l
+
+    table _ _ _ = text "{TODO: Table}"
 
     fixString Plain s = latexFilter s
     fixString Verb  s = s
@@ -1268,12 +1268,12 @@ quote :: LaTeX -> LaTeX
 quote doc = text "\\begin{quote}" $$ doc $$ text "\\end{quote}"
 
 
-dcolon, arrow, darrow, forallSymbol :: Bool -> LaTeX
+dcolon, arrow, darrow, forallSymbol, starSymbol :: Bool -> LaTeX
 dcolon unicode = text (if unicode then "∷" else "::")
 arrow  unicode = text (if unicode then "→" else "->")
 darrow unicode = text (if unicode then "⇒" else "=>")
 forallSymbol unicode = text (if unicode then "∀" else "forall")
-
+starSymbol unicode = text (if unicode then "★" else "*")
 
 dot :: LaTeX
 dot = char '.'

@@ -29,23 +29,23 @@ import qualified Data.Set as Set
 
 -- | Instantiate all occurrences of given names with corresponding types.
 specialize :: Data a => [(Name, HsType GhcRn)] -> a -> a
-specialize specs = go
+specialize specs = go spec_map0
   where
-    go :: forall x. Data x => x -> x
-    go = everywhereButType @Name $ mkT $ sugar . strip_kind_sig . specialize_ty_var
+    go :: forall x. Data x => Map Name (HsType GhcRn) -> x -> x
+    go spec_map = everywhereButType @Name $ mkT $ sugar . strip_kind_sig . specialize_ty_var spec_map
 
     strip_kind_sig :: HsType name -> HsType name
     strip_kind_sig (HsKindSig _ (L _ t) _) = t
     strip_kind_sig typ = typ
 
-    specialize_ty_var :: HsType GhcRn -> HsType GhcRn
-    specialize_ty_var (HsTyVar _ _ (L _ name'))
+    specialize_ty_var :: Map Name (HsType GhcRn) -> HsType GhcRn -> HsType GhcRn
+    specialize_ty_var spec_map (HsTyVar _ _ (L _ name'))
       | Just t <- Map.lookup name' spec_map = t
-    specialize_ty_var typ = typ
-    -- This is a tricky recursive definition that is guaranteed to terminate
-    -- because a type binder cannot be instantiated with a type that depends
-    -- on that binder. i.e. @a -> Maybe a@ is invalid
-    spec_map = Map.fromList [ (n, go t) | (n, t) <- specs]
+    specialize_ty_var _ typ = typ
+
+    -- This is a tricky recursive definition. By adding in the specializations
+    -- one by one, we should avoid infinite loops.
+    spec_map0 = foldr (\(n,t) acc -> Map.insert n (go acc t) acc) mempty specs
 
 
 -- | Instantiate given binders with corresponding types.
@@ -254,6 +254,7 @@ renameType (HsQualTy ext lctxt lt) =
         <$> located renameContext lctxt
         <*> renameLType lt
 renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
+renameType t@(HsStarTy _ _) = pure t
 renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
 renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameRig w <*> renameLType lr
 renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
@@ -276,7 +277,6 @@ renameType (HsExplicitTupleTy phs ltys) =
     HsExplicitTupleTy phs <$> renameLTypes ltys
 renameType t@(HsTyLit _ _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
-renameType (HsAppsTy _ _) = error "HsAppsTy: Only used before renaming"
 
 renameRig :: HsRig GhcRn -> Rename (IdP GhcRn) (HsRig GhcRn)
 renameRig (HsRigTy t) = HsRigTy <$> renameLType t
