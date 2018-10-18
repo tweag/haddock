@@ -172,7 +172,7 @@ getGADTConType :: ( XForAllTy p ~ NoExt, XRecTy p ~ NoExt
 -- order to pretty-print it, and currently only in Haddock's code.  So
 -- we are cavalier about locations and extensions, hence the
 -- 'undefined's
-getGADTConType (ConDeclGADT { con_forall = has_forall
+getGADTConType (ConDeclGADT { con_forall = L _ has_forall
                             , con_qvars = qtvs
                             , con_mb_cxt = mcxt, con_args = args
                             , con_res_ty = res_ty })
