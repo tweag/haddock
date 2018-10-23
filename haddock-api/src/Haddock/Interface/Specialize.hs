@@ -245,12 +245,12 @@ data RenameEnv name = RenameEnv
 
 
 renameType :: HsType GhcRn -> Rename (IdP GhcRn) (HsType GhcRn)
-renameType (HsForAllTy ext bndrs lt) =
-    HsForAllTy ext
+renameType (HsForAllTy x bndrs lt) =
+    HsForAllTy x
         <$> mapM (located renameBinder) bndrs
         <*> renameLType lt
-renameType (HsQualTy ext lctxt lt) =
-    HsQualTy ext
+renameType (HsQualTy x lctxt lt) =
+    HsQualTy x
         <$> located renameContext lctxt
         <*> renameLType lt
 renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
@@ -266,14 +266,14 @@ renameType (HsParTy x lt) = HsParTy x <$> renameLType lt
 renameType (HsIParamTy x ip lt) = HsIParamTy x ip <$> renameLType lt
 renameType (HsKindSig x lt lk) = HsKindSig x <$> renameLType lt <*> pure lk
 renameType t@(HsSpliceTy _ _) = pure t
-renameType (HsDocTy ext lt doc) = HsDocTy ext <$> renameLType lt <*> pure doc
-renameType (HsBangTy ext bang lt) = HsBangTy ext bang <$> renameLType lt
+renameType (HsDocTy x lt doc) = HsDocTy x <$> renameLType lt <*> pure doc
+renameType (HsBangTy x bang lt) = HsBangTy x bang <$> renameLType lt
 renameType t@(HsRecTy _ _) = pure t
 renameType t@(XHsType (NHsCoreTy _)) = pure t
-renameType (HsExplicitListTy  ip ph ltys) =
-    HsExplicitListTy ip ph <$> renameLTypes ltys
-renameType (HsExplicitTupleTy phs ltys) =
-    HsExplicitTupleTy phs <$> renameLTypes ltys
+renameType (HsExplicitListTy x ip ltys) =
+    HsExplicitListTy x ip <$> renameLTypes ltys
+renameType (HsExplicitTupleTy x ltys) =
+    HsExplicitTupleTy x <$> renameLTypes ltys
 renameType t@(HsTyLit _ _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
 

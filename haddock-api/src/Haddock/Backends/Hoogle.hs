@@ -267,7 +267,7 @@ ppCtor dflags dat subdocs con@ConDeclH98 {}
 ppCtor dflags _dat subdocs con@(ConDeclGADT { })
    = concatMap (lookupCon dflags subdocs) (getConNames con) ++ f
     where
-        f = [typeSig name (getGADTConType con)]
+        f = [typeSig name (getGADTConTypeG con)]
 
         typeSig nm ty = operator nm ++ " :: " ++ outHsType dflags (unL ty)
         name = out dflags $ map unL $ getConNames con

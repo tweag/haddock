@@ -160,12 +160,12 @@ synifyTyCon _coax tc
                                                 , hsq_dependent = emptyNameSet }
                                    , hsq_explicit = zipWith mk_hs_tv (fst (splitFunTys (tyConKind tc)))
                                                                 alphaTyVars --a, b, c... which are unfortunately all kind *
-}
+                                   }
 
-              , tcdFixity = Prefix
+           , tcdFixity = Prefix
 
-              , tcdDataDefn = HsDataDefn { dd_ext = noExt
-                                        , dd_ND = DataType  -- arbitrary lie, they are neither
+           , tcdDataDefn = HsDataDefn { dd_ext = noExt
+                                      , dd_ND = DataType  -- arbitrary lie, they are neither
                                                     -- algebraic data nor newtype:
                                       , dd_ctxt = noLoc []
                                       , dd_cType = Nothing
