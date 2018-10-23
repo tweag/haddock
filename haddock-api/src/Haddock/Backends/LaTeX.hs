@@ -978,10 +978,6 @@ ppr_mono_ty _         (HsExplicitListTy _ Promoted tys) u = Pretty.quote $ brack
 ppr_mono_ty _         (HsExplicitListTy _ NotPromoted tys) u = brackets $ hsep $ punctuate comma $ map (ppLType u) tys
 ppr_mono_ty _         (HsExplicitTupleTy _ tys) u = Pretty.quote $ parenList $ map (ppLType u) tys
 
-ppr_mono_ty ctxt_prec (HsEqTy _ ty1 ty2) unicode
-  = maybeParen ctxt_prec pREC_OP $
-    ppr_mono_lty pREC_OP ty1 unicode <+> char '~' <+> ppr_mono_lty pREC_OP ty2 unicode
-
 ppr_mono_ty ctxt_prec (HsAppTy _ fun_ty arg_ty) unicode
   = maybeParen ctxt_prec pREC_CON $
     hsep [ppr_mono_lty pREC_FUN fun_ty unicode, ppr_mono_lty pREC_CON arg_ty unicode]
