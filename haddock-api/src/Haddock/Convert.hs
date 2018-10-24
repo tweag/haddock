@@ -31,14 +31,15 @@ import NameSet ( emptyNameSet )
 import RdrName ( mkVarUnqual )
 import PatSyn
 import SrcLoc ( Located, noLoc, unLoc, GenLocated(..), srcLocSpan )
-import TcType ( tcSplitSigmaTy )
+import TcType
 import TyCon
 import Type
 import TyCoRep
 import TysPrim ( alphaTyVars )
-import TysWiredIn ( listTyConName, liftedTypeKindTyConName, unitTy )
-import PrelNames ( hasKey, eqTyConKey, eqTyConName, ipClassKey
-                 , tYPETyConKey, liftedRepDataConKey )
+import TysWiredIn ( eqTyConName, listTyConName, liftedTypeKindTyConName
+                  , unitTy )
+import PrelNames ( hasKey, eqTyConKey, ipClassKey, tYPETyConKey
+                 , liftedRepDataConKey )
 import Unique ( getUnique )
 import Util ( chkAppend, compareLength, dropList, filterByList, filterOut
             , splitAtList )
@@ -530,7 +531,7 @@ synifyType _ (FunTy w t1 t2) = let
   w'  = synifyRig w
   in noLoc $ HsFunTy noExt s1 w' s2
 synifyType s forallty@(ForAllTy _tv _ty) =
-  let (tvs, ctx, tau) = tcSplitSigmaTy forallty
+  let (tvs, ctx, tau) = tcSplitSigmaTyPreserveSynonyms forallty
       sPhi = HsQualTy { hst_ctxt = synifyCtx ctx
                       , hst_xqual   = noExt
                       , hst_body = synifyType WithinType tau }
@@ -640,3 +641,47 @@ synifyFamInst fi opaque = do
     ts' = synifyTypes ts
     annot_ts = zipWith3 annotHsType is_poly_tvs ts ts'
     is_poly_tvs = mkIsPolyTvs (tyConVisibleTyVars fam_tc)
+
+{-
+Note [Invariant: Never expand type synonyms]
+
+In haddock, we never want to expand a type synonym that may be presented to the
+user, as we want to keep the link to the abstraction captured in the synonym.
+
+All code in Haddock.Convert must make sure that this invariant holds.
+
+See https://github.com/haskell/haddock/issues/879 for a bug where this
+invariant didn't hold.
+-}
+
+-- | A version of 'TcType.tcSplitSigmaTy' that preserves type synonyms.
+--
+-- See Note [Invariant: Never expand type synonyms]
+tcSplitSigmaTyPreserveSynonyms :: Type -> ([TyVar], ThetaType, Type)
+tcSplitSigmaTyPreserveSynonyms ty =
+    case tcSplitForAllTysPreserveSynonyms ty of
+      (tvs, rho) -> case tcSplitPhiTyPreserveSynonyms rho of
+        (theta, tau) -> (tvs, theta, tau)
+
+-- | See Note [Invariant: Never expand type synonyms]
+tcSplitForAllTysPreserveSynonyms :: Type -> ([TyVar], Type)
+tcSplitForAllTysPreserveSynonyms ty = split ty ty []
+  where
+    split _       (ForAllTy (TvBndr tv _) ty') tvs = split ty' ty' (tv:tvs)
+    split orig_ty _                            tvs = (reverse tvs, orig_ty)
+
+-- | See Note [Invariant: Never expand type synonyms]
+tcSplitPhiTyPreserveSynonyms :: Type -> (ThetaType, Type)
+tcSplitPhiTyPreserveSynonyms ty0 = split ty0 []
+  where
+    split ty ts
+      = case tcSplitPredFunTyPreserveSynonyms_maybe ty of
+          Just (pred_, ty') -> split ty' (pred_:ts)
+          Nothing           -> (reverse ts, ty)
+
+-- | See Note [Invariant: Never expand type synonyms]
+tcSplitPredFunTyPreserveSynonyms_maybe :: Type -> Maybe (PredType, Type)
+tcSplitPredFunTyPreserveSynonyms_maybe (FunTy arg res)
+  | isPredTy arg = Just (arg, res)
+tcSplitPredFunTyPreserveSynonyms_maybe _
+  = Nothing
