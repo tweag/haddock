@@ -681,7 +681,7 @@ tcSplitPhiTyPreserveSynonyms ty0 = split ty0 []
 
 -- | See Note [Invariant: Never expand type synonyms]
 tcSplitPredFunTyPreserveSynonyms_maybe :: Type -> Maybe (PredType, Type)
-tcSplitPredFunTyPreserveSynonyms_maybe (FunTy arg res)
+tcSplitPredFunTyPreserveSynonyms_maybe (FunTy _ arg res)
   | isPredTy arg = Just (arg, res)
 tcSplitPredFunTyPreserveSynonyms_maybe _
   = Nothing
