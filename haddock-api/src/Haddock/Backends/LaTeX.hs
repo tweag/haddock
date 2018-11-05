@@ -977,7 +977,7 @@ tupleParens _              = parenList
 
 
 sumParens :: [LaTeX] -> LaTeX
-sumParens = ubxparens . hsep . punctuate (text " | ")
+sumParens = ubxparens . hsep . punctuate (text " |")
 
 
 -------------------------------------------------------------------------------
@@ -1338,7 +1338,7 @@ ubxParenList = ubxparens . hsep . punctuate comma
 
 
 ubxparens :: LaTeX -> LaTeX
-ubxparens h = text "(#" <> h <> text "#)"
+ubxparens h = text "(#" <+> h <+> text "#)"
 
 
 nl :: LaTeX

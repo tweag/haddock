@@ -37,7 +37,7 @@ import Type
 import TyCoRep
 import TysPrim ( alphaTyVars )
 import TysWiredIn ( eqTyConName, listTyConName, liftedTypeKindTyConName
-                  , unitTy )
+                  , unitTy, promotedNilDataCon, promotedConsDataCon )
 import PrelNames ( hasKey, eqTyConKey, ipClassKey, tYPETyConKey
                  , liftedRepDataConKey )
 import Unique ( getUnique )
@@ -459,9 +459,24 @@ synifyType _ (TyConApp tc tys)
                               ConstraintTuple -> HsConstraintTuple
                               UnboxedTuple    -> HsUnboxedTuple)
                            (map (synifyType WithinType) vis_tys)
+      | isUnboxedSumTyCon tc = noLoc $ HsSumTy noExt (map (synifyType WithinType) vis_tys)
+      | Just dc <- isPromotedDataCon_maybe tc
+      , isTupleDataCon dc
+      , dataConSourceArity dc == length vis_tys
+      = noLoc $ HsExplicitTupleTy noExt (map (synifyType WithinType) vis_tys)
       -- ditto for lists
-      | getName tc == listTyConName, [ty] <- tys =
+      | getName tc == listTyConName, [ty] <- vis_tys =
          noLoc $ HsListTy noExt (synifyType WithinType ty)
+      | tc == promotedNilDataCon, [] <- vis_tys
+      = noLoc $ HsExplicitListTy noExt Promoted []
+      | tc == promotedConsDataCon
+      , [ty1, ty2] <- vis_tys
+      = let hTy = synifyType WithinType ty1
+        in case synifyType WithinType ty2 of
+             tTy | L _ (HsExplicitListTy _ Promoted tTy') <- stripKindSig tTy
+                 -> noLoc $ HsExplicitListTy noExt Promoted (hTy : tTy')
+                 | otherwise
+                 -> noLoc $ HsOpTy noExt hTy (noLoc $ getName tc) tTy
       -- ditto for implicit parameter tycons
       | tc `hasKey` ipClassKey
       , [name, ty] <- tys
@@ -581,6 +596,10 @@ synifyTyLit (StrTyLit s) = HsStrTy NoSourceText s
 synifyKindSig :: Kind -> LHsKind GhcRn
 synifyKindSig k = synifyType WithinType k
 
+stripKindSig :: LHsType GhcRn -> LHsType GhcRn
+stripKindSig (L _ (HsKindSig _ t _)) = t
+stripKindSig t = t
+
 synifyInstHead :: ([TyVar], [PredType], Class, [Type]) -> InstHead GhcRn
 synifyInstHead (_, preds, cls, types) = specializeInstHead $ InstHead
     { ihdClsName = getName cls
@@ -666,8 +685,8 @@ tcSplitSigmaTyPreserveSynonyms ty =
 tcSplitForAllTysPreserveSynonyms :: Type -> ([TyVar], Type)
 tcSplitForAllTysPreserveSynonyms ty = split ty ty []
   where
-    split _       (ForAllTy (TvBndr tv _) ty') tvs = split ty' ty' (tv:tvs)
-    split orig_ty _                            tvs = (reverse tvs, orig_ty)
+    split _       (ForAllTy (Bndr tv _) ty') tvs = split ty' ty' (tv:tvs)
+    split orig_ty _                          tvs = (reverse tvs, orig_ty)
 
 -- | See Note [Invariant: Never expand type synonyms]
 tcSplitPhiTyPreserveSynonyms :: Type -> (ThetaType, Type)
