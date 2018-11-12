@@ -256,7 +256,7 @@ renameType (HsQualTy x lctxt lt) =
 renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
 renameType t@(HsStarTy _ _) = pure t
 renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
-renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameRig w <*> renameLType lr
+renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameMult w <*> renameLType lr
 renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
 renameType (HsTupleTy x srt lt) = HsTupleTy x srt <$> mapM renameLType lt
 renameType (HsSumTy x lt) = HsSumTy x <$> mapM renameLType lt
@@ -277,9 +277,9 @@ renameType (HsExplicitTupleTy x ltys) =
 renameType t@(HsTyLit _ _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
 
-renameRig :: HsRig GhcRn -> Rename (IdP GhcRn) (HsRig GhcRn)
-renameRig (HsRigTy t) = HsRigTy <$> renameLType t
-renameRig r = pure r
+renameMult :: HsMult GhcRn -> Rename (IdP GhcRn) (HsMult GhcRn)
+renameMult (HsMultTy t) = HsMultTy <$> renameLType t
+renameMult r = pure r
 
 
 

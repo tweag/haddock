@@ -218,12 +218,12 @@ renameMaybeInjectivityAnn :: Maybe (LInjectivityAnn GhcRn)
                           -> RnM (Maybe (LInjectivityAnn DocNameI))
 renameMaybeInjectivityAnn = traverse renameInjectivityAnn
 
-renameRig :: HsRig GhcRn -> RnM (HsRig DocNameI)
+renameRig :: HsMult GhcRn -> RnM (HsMult DocNameI)
 renameRig t = case t of
                 HsZero -> return HsZero
                 HsOne  -> return HsOne
                 HsOmega -> return HsOmega
-                HsRigTy lty -> HsRigTy <$> renameLType lty
+                HsMultTy lty -> HsMultTy <$> renameLType lty
 
 renameType :: HsType GhcRn -> RnM (HsType DocNameI)
 renameType t = case t of
@@ -493,7 +493,7 @@ renameCon decl@(ConDeclGADT { con_names = lnames, con_qvars = ltyvars
 renameCon (XConDecl _) = panic "haddock:renameCon"
 
 renameHsScaled :: HsScaled GhcRn (LHsType GhcRn)
-               -> RnM (HsWeighted DocNameI (LHsType DocNameI))
+               -> RnM (HsScaled DocNameI (LHsType DocNameI))
 renameHsScaled (HsScaled w ty) = HsScaled <$> renameRig w <*> renameLType ty
 
 renameDetails :: HsConDeclDetails GhcRn -> RnM (HsConDeclDetails DocNameI)
@@ -502,10 +502,10 @@ renameDetails (RecCon (L l fields)) = do
   return (RecCon (L l fields'))
                                -- This causes an assertion failure
 --renameDetails (PrefixCon ps) = -- return . PrefixCon =<< mapM (_renameLType) ps
-renameDetails (PrefixCon ps) = PrefixCon <$> mapM renameHsWeighted ps
+renameDetails (PrefixCon ps) = PrefixCon <$> mapM renameHsScaled ps
 renameDetails (InfixCon a b) = do
-  a' <- renameHsWeighted a
-  b' <- renameHsWeighted b
+  a' <- renameHsScaled a
+  b' <- renameHsScaled b
   return (InfixCon a' b')
 
 renameConDeclFieldField :: LConDeclField GhcRn -> RnM (LConDeclField DocNameI)

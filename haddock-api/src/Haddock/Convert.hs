@@ -156,7 +156,7 @@ synifyTyCon _coax tc
              , tcdTyVars =       -- tyConTyVars doesn't work on fun/prim, but we can make them up:
                          let mk_hs_tv realKind fakeTyVar
                                 = noLoc $ KindedTyVar noExt (noLoc (getName fakeTyVar))
-                                                      (synifyKindSig (weightedThing realKind))
+                                                      (synifyKindSig (scaledThing realKind))
                          in HsQTvs { hsq_ext =
                                        HsQTvsRn { hsq_implicit = []   -- No kind polymorphism
                                                 , hsq_dependent = emptyNameSet }
@@ -318,7 +318,7 @@ synifyDataCon use_gadt_syntax dc =
 
   linear_tys =
     zipWith (\ty bang ->
-               let tySyn = (synifyType WithinType) (weightedThing ty) -- MattP: Check
+               let tySyn = (synifyType WithinType) (scaledThing ty) -- MattP: Check
                in case bang of
                     (HsSrcBang _ NoSrcUnpack NoSrcStrict) -> tySyn
                     bang' -> noLoc $ HsBangTy noExt bang' tySyn)
@@ -569,7 +569,7 @@ synifyRig t = case t of
                 Omega -> HsOmega
                 RigAdd r1 r2 -> error "synifyRig"
                 RigMul r1 r2 -> error "synifyRig"
-                RigThing ty -> HsRigTy (synifyType WithinType ty)
+                RigThing ty -> HsMultTy (synifyType WithinType ty)
 
 
 
