@@ -37,7 +37,7 @@ import Control.Monad
 import Data.Maybe
 import Data.List
 import Prelude hiding ((<>))
-import Weight
+import Multiplicity
 
 import Haddock.Doc (combineDocumentation)
 

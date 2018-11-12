@@ -32,7 +32,7 @@ import HscTypes
 import GHC
 import Class
 import DynFlags
-import Weight
+import Multiplicity
 import HsTypes (HsType(..))
 
 moduleString :: Module -> String

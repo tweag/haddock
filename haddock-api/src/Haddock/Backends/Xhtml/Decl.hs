@@ -38,7 +38,7 @@ import Name
 import BooleanFormula
 import RdrName ( rdrNameOcc )
 import Outputable ( panic )
-import Weight
+import Multiplicity
 
 -- | Pretty print a declaration
 ppDecl :: Bool                                     -- ^ print summary info only

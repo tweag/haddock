@@ -492,9 +492,9 @@ renameCon decl@(ConDeclGADT { con_names = lnames, con_qvars = ltyvars
                    , con_res_ty = res_ty', con_doc = mbldoc' })
 renameCon (XConDecl _) = panic "haddock:renameCon"
 
-renameHsWeighted :: HsWeighted GhcRn (LHsType GhcRn)
-                 -> RnM (HsWeighted DocNameI (LHsType DocNameI))
-renameHsWeighted (HsWeighted w ty) = HsWeighted <$> renameRig w <*> renameLType ty
+renameHsScaled :: HsScaled GhcRn (LHsType GhcRn)
+               -> RnM (HsWeighted DocNameI (LHsType DocNameI))
+renameHsScaled (HsScaled w ty) = HsScaled <$> renameRig w <*> renameLType ty
 
 renameDetails :: HsConDeclDetails GhcRn -> RnM (HsConDeclDetails DocNameI)
 renameDetails (RecCon (L l fields)) = do

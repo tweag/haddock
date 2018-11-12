@@ -63,7 +63,7 @@ import BasicTypes ( StringLiteral(..), SourceText(..) )
 import qualified Outputable as O
 import HsDecls ( getConArgs )
 
-import Weight
+import Multiplicity
 
 
 -- | Use a 'TypecheckedModule' to produce an 'Interface'.

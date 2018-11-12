@@ -49,7 +49,7 @@ import VarSet
 import Haddock.Types
 import Haddock.Interface.Specialize
 
-import Weight
+import Multiplicity
 
 
 
@@ -562,7 +562,7 @@ synifyType _ (LitTy t) = noLoc $ HsTyLit noExt $ synifyTyLit t
 synifyType s (CastTy t _) = synifyType s t
 synifyType _ (CoercionTy {}) = error "synifyType:Coercion"
 
-synifyRig :: Rig -> HsRig GhcRn
+synifyRig :: Mult -> HsMult GhcRn
 synifyRig t = case t of
                 Zero -> HsZero
                 One  -> HsOne

@@ -88,7 +88,7 @@ import qualified System.Posix.Internals
 
 import MonadUtils ( MonadIO(..) )
 
-import Weight
+import Multiplicity
 
 
 --------------------------------------------------------------------------------
