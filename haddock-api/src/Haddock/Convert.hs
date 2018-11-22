@@ -544,7 +544,7 @@ synifyType _ (AppTy t1 t2) = let
 synifyType _ (FunTy w t1 t2) = let
   s1 = synifyType WithinType t1
   s2 = synifyType WithinType t2
-  w'  = synifyRig w
+  w'  = synifyMult w
   in noLoc $ HsFunTy noExt s1 w' s2
 synifyType s forallty@(ForAllTy _tv _ty) =
   let (tvs, ctx, tau) = tcSplitSigmaTyPreserveSynonyms forallty
@@ -562,14 +562,14 @@ synifyType _ (LitTy t) = noLoc $ HsTyLit noExt $ synifyTyLit t
 synifyType s (CastTy t _) = synifyType s t
 synifyType _ (CoercionTy {}) = error "synifyType:Coercion"
 
-synifyRig :: Mult -> HsMult GhcRn
-synifyRig t = case t of
+synifyMult :: Mult -> HsMult GhcRn
+synifyMult t = case t of
                 Zero -> HsZero
                 One  -> HsOne
                 Omega -> HsOmega
-                RigAdd r1 r2 -> error "synifyRig"
-                RigMul r1 r2 -> error "synifyRig"
-                RigThing ty -> HsMultTy (synifyType WithinType ty)
+                MultAdd r1 r2 -> error "synifyMult"
+                MultMul r1 r2 -> error "synifyMult"
+                MultThing ty -> HsMultTy (synifyType WithinType ty)
 
 
 
