@@ -34,7 +34,7 @@ import Data.Map (Map)
 import Data.Data (Data)
 import qualified Data.Map as Map
 import Documentation.Haddock.Types
-import BasicTypes (Fixity(..))
+import BasicTypes (Fixity(..), PromotionFlag(..))
 
 import GHC hiding (NoLink)
 import DynFlags (Language)
@@ -467,7 +467,7 @@ instance NFData ModuleName where rnf x = seq x ()
 instance NFData id => NFData (Header id) where
   rnf (Header a b) = a `deepseq` b `deepseq` ()
 
-instance NFData Hyperlink where
+instance NFData id => NFData (Hyperlink id) where
   rnf (Hyperlink a b) = a `deepseq` b `deepseq` ()
 
 instance NFData Picture where

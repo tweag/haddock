@@ -32,6 +32,7 @@ import qualified Data.Map as Map
 import           Data.Maybe
 import           Text.XHtml hiding     ( name, title, p, quote )
 
+import BasicTypes (PromotionFlag(..))
 import GHC hiding (LexicalFixity(..))
 import GHC.Exts
 import Name
@@ -123,12 +124,12 @@ ppTypeOrFunSig :: Bool -> LinksInfo -> SrcSpan -> [DocName] -> HsType DocNameI
 ppTypeOrFunSig summary links loc docnames typ (doc, argDocs) (pref1, pref2, sep)
                splice unicode pkg qual emptyCtxts
   | summary = pref1
-  | Map.null argDocs = topDeclElem links loc splice docnames pref1 +++ docSection curName pkg qual doc
+  | Map.null argDocs = topDeclElem links loc splice docnames pref1 +++ docSection curname pkg qual doc
   | otherwise = topDeclElem links loc splice docnames pref2
                   +++ subArguments pkg qual (ppSubSigLike unicode qual typ argDocs [] sep emptyCtxts)
-                  +++ docSection curName pkg qual doc
+                  +++ docSection curname pkg qual doc
   where
-    curName = getName <$> listToMaybe docnames
+    curname = getName <$> listToMaybe docnames
 
 
 -- This splits up a type signature along `->` and adds docs (when they exist) to
@@ -291,10 +292,11 @@ ppFamDecl :: Bool                     -- ^ is a summary
           -> Splice -> Unicode -> Maybe Package -> Qualification -> Html
 ppFamDecl summary associated links instances fixities loc doc decl splice unicode pkg qual
   | summary   = ppFamHeader True associated decl unicode qual
-  | otherwise = header_ +++ docSection Nothing pkg qual doc +++ instancesBit
+  | otherwise = header_ +++ docSection curname pkg qual doc +++ instancesBit
 
   where
     docname = unLoc $ fdLName decl
+    curname = Just $ getName docname
 
     header_ = topDeclElem links loc splice [docname] $
        ppFamHeader summary associated decl unicode qual <+> ppFixities fixities qual
@@ -529,9 +531,11 @@ ppClassDecl summary links instances fixities loc d subdocs
                         , tcdFDs = lfds, tcdSigs = lsigs, tcdATs = ats })
             splice unicode pkg qual
   | summary = ppShortClassDecl summary links decl loc subdocs splice unicode pkg qual
-  | otherwise = classheader +++ docSection Nothing pkg qual d
+  | otherwise = classheader +++ docSection curname pkg qual d
                   +++ minimalBit +++ atBit +++ methodBit +++ instancesBit
   where
+    curname = Just $ getName nm
+
     sigs = map unLoc lsigs
 
     classheader
@@ -760,10 +764,11 @@ ppDataDecl summary links instances fixities subdocs loc doc dataDecl pats
            splice unicode pkg qual
 
   | summary   = ppShortDataDecl summary False dataDecl pats unicode qual
-  | otherwise = header_ +++ docSection Nothing pkg qual doc +++ constrBit +++ patternBit +++ instancesBit
+  | otherwise = header_ +++ docSection curname pkg qual doc +++ constrBit +++ patternBit +++ instancesBit
 
   where
     docname   = tcdName dataDecl
+    curname   = Just $ getName docname
     cons      = dd_cons (tcdDataDefn dataDecl)
     isH98     = case unLoc (head cons) of
                   ConDeclH98 {} -> True
@@ -1181,7 +1186,7 @@ ppr_mono_ty (HsRecTy {})        _ _ _ = toHtml "{..}"
        -- placeholder in the signature, which is followed by the field
        -- declarations.
 ppr_mono_ty (XHsType (NHsCoreTy {})) _ _ _ = error "ppr_mono_ty HsCoreTy"
-ppr_mono_ty (HsExplicitListTy _ Promoted tys) u q _ = promoQuote $ brackets $ hsep $ punctuate comma $ map (ppLType u q HideEmptyContexts) tys
+ppr_mono_ty (HsExplicitListTy _ IsPromoted tys) u q _ = promoQuote $ brackets $ hsep $ punctuate comma $ map (ppLType u q HideEmptyContexts) tys
 ppr_mono_ty (HsExplicitListTy _ NotPromoted tys) u q _ = brackets $ hsep $ punctuate comma $ map (ppLType u q HideEmptyContexts) tys
 ppr_mono_ty (HsExplicitTupleTy _ tys) u q _ = promoQuote $ parenList $ map (ppLType u q HideEmptyContexts) tys
 
