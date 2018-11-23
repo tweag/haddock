@@ -192,9 +192,8 @@ getGADTConType (ConDeclGADT { con_forall = L _ has_forall
               PrefixCon pos_args -> foldr mk_fun_ty res_ty (map hsThing pos_args)
               InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
 
-   -- MattP: TODO
---   mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy a HsOmega b
+   -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
+   mk_fun_ty a b = nlHsFunTy a HsUnrestrictedArrow b
 
 getGADTConType (ConDeclH98 {}) = panic "getGADTConType"
   -- Should only be called on ConDeclGADT
@@ -227,9 +226,8 @@ getGADTConTypeG (ConDeclGADT { con_forall = L _ has_forall
               PrefixCon pos_args -> foldr mk_fun_ty res_ty (map hsThing pos_args)
               InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
 
-   -- MattP: TODO
---   mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy a HsOmega b
+   -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
+   mk_fun_ty a b = nlHsFunTy a HsUnrestrictedArrow b
 
 getGADTConTypeG (ConDeclH98 {}) = panic "getGADTConTypeG"
   -- Should only be called on ConDeclGADT

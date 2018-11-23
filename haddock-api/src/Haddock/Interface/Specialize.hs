@@ -137,7 +137,7 @@ sugarTuples typ =
 sugarOperators :: NamedThing (IdP (GhcPass p)) => HsType (GhcPass p) -> HsType (GhcPass p)
 sugarOperators (HsAppTy _ (L _ (HsAppTy _ (L _ (HsTyVar _ _ (L l name))) la)) lb)
     | isSymOcc $ getOccName name' = mkHsOpTy la (L l name) lb
-    | isBuiltInSyntax name' && getOccString name == "(->)" = HsFunTy NoExt la HsOmega lb -- MattP: TODO
+    | isBuiltInSyntax name' && getOccString name == "(->)" = HsFunTy NoExt la HsUnrestrictedArrow lb
   where
     name' = getName name
 sugarOperators typ = typ
@@ -256,7 +256,7 @@ renameType (HsQualTy x lctxt lt) =
 renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
 renameType t@(HsStarTy _ _) = pure t
 renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
-renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameMult w <*> renameLType lr
+renameType (HsFunTy x la w lr) = HsFunTy x <$> renameLType la <*> renameHsArrow w <*> renameLType lr
 renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
 renameType (HsTupleTy x srt lt) = HsTupleTy x srt <$> mapM renameLType lt
 renameType (HsSumTy x lt) = HsSumTy x <$> mapM renameLType lt
@@ -281,6 +281,9 @@ renameMult :: HsMult GhcRn -> Rename (IdP GhcRn) (HsMult GhcRn)
 renameMult (HsMultTy t) = HsMultTy <$> renameLType t
 renameMult r = pure r
 
+renameHsArrow :: HsArrow GhcRn -> Rename (IdP GhcRn) (HsArrow GhcRn)
+renameHsArrow (HsExplicitMult p) = HsExplicitMult <$> renameMult p
+renameHsArrow mult = pure mult
 
 
 renameLType :: LHsType GhcRn -> Rename (IdP GhcRn) (LHsType GhcRn)

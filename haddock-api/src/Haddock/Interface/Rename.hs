@@ -225,6 +225,11 @@ renameMult t = case t of
                 HsOmega -> return HsOmega
                 HsMultTy lty -> HsMultTy <$> renameLType lty
 
+renameArrow :: HsArrow GhcRn -> RnM (HsArrow DocNameI)
+renameArrow HsUnrestrictedArrow = return HsUnrestrictedArrow
+renameArrow HsLinearArrow = return HsLinearArrow
+renameArrow (HsExplicitMult p) = HsExplicitMult <$> renameMult p
+
 renameType :: HsType GhcRn -> RnM (HsType DocNameI)
 renameType t = case t of
   HsForAllTy { hst_bndrs = tyvars, hst_body = ltype } -> do
@@ -250,7 +255,7 @@ renameType t = case t of
   HsFunTy _ a w b -> do
     a' <- renameLType a
     b' <- renameLType b
-    w' <- renameMult w
+    w' <- renameArrow w
     return (HsFunTy NoExt a' w' b')
 
   HsListTy _ ty -> return . (HsListTy NoExt) =<< renameLType ty

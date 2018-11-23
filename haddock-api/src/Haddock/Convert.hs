@@ -562,14 +562,14 @@ synifyType _ (LitTy t) = noLoc $ HsTyLit noExt $ synifyTyLit t
 synifyType s (CastTy t _) = synifyType s t
 synifyType _ (CoercionTy {}) = error "synifyType:Coercion"
 
-synifyMult :: Mult -> HsMult GhcRn
+synifyMult :: Mult -> HsArrow GhcRn
 synifyMult t = case t of
-                Zero -> HsZero
-                One  -> HsOne
-                Omega -> HsOmega
-                MultAdd r1 r2 -> error "synifyMult"
-                MultMul r1 r2 -> error "synifyMult"
-                MultThing ty -> HsMultTy (synifyType WithinType ty)
+                Zero -> error "synifyMult: 0"
+                One  -> HsLinearArrow
+                Omega -> HsUnrestrictedArrow
+                MultAdd r1 r2 -> error "synifyMult: Add"
+                MultMul r1 r2 -> error "synifyMult: Mul"
+                MultThing ty -> HsExplicitMult (HsMultTy (synifyType WithinType ty))
 
 
 
