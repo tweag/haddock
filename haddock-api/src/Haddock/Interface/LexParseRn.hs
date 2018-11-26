@@ -135,7 +135,7 @@ rename dflags gre = rn
       DocCodeBlock doc -> DocCodeBlock <$> rn doc
       DocIdentifierUnchecked x -> pure (DocIdentifierUnchecked x)
       DocModule str -> pure (DocModule str)
-      DocHyperlink l -> pure (DocHyperlink l)
+      DocHyperlink (Hyperlink u l) -> DocHyperlink . Hyperlink u <$> traverse rn l
       DocPic str -> pure (DocPic str)
       DocMathInline str -> pure (DocMathInline str)
       DocMathDisplay str -> pure (DocMathDisplay str)
@@ -165,8 +165,7 @@ outOfScope dflags x =
   where
     warnAndMonospace a = do
       tell ["Warning: '" ++ showPpr dflags a ++ "' is out of scope.\n" ++
-            "    If you qualify the identifier, haddock can try to link it\n" ++
-            "    it anyway."]
+            "    If you qualify the identifier, haddock can try to link it anyway."]
       pure (monospaced a)
     monospaced a = DocMonospaced (DocString (showPpr dflags a))
 

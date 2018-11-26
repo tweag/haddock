@@ -1,5 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeFamilies #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Haddock.Backends.LaTeX
@@ -22,6 +24,7 @@ import Haddock.GhcUtils
 import Pretty hiding (Doc, quote)
 import qualified Pretty
 
+import BasicTypes           ( PromotionFlag(..) )
 import GHC
 import OccName
 import Name                 ( nameOccName )
@@ -246,8 +249,8 @@ ppDocGroup lev doc = sec lev <> braces doc
 
 -- | Given a declaration, extract out the names being declared
 declNames :: LHsDecl DocNameI
-          -> ( LaTeX           -- ^ to print before each name in an export list
-             , [DocName]       -- ^ names being declared
+          -> ( LaTeX           --   to print before each name in an export list
+             , [DocName]       --   names being declared
              )
 declNames (L _ decl) = case decl of
   TyClD _ d  -> (empty, [tcdName d])
@@ -447,9 +450,9 @@ ppLPatSig doc docnames ty unicode
 -- arguments as needed.
 ppTypeOrFunSig :: HsType DocNameI
                -> DocForDecl DocName  -- ^ documentation
-               -> ( LaTeX             -- ^ first-line (no-argument docs only)
-                  , LaTeX             -- ^ first-line (argument docs only)
-                  , LaTeX             -- ^ type prefix (argument docs only)
+               -> ( LaTeX             --   first-line (no-argument docs only)
+                  , LaTeX             --   first-line (argument docs only)
+                  , LaTeX             --   type prefix (argument docs only)
                   )
                -> Bool                -- ^ unicode
                -> LaTeX
@@ -1030,7 +1033,7 @@ ppr_mono_ty (HsFunTy _ ty1 _ ty2)   u
 
 ppr_mono_ty (HsBangTy _ b ty)     u = ppBang b <> ppLParendType u ty
 ppr_mono_ty (HsTyVar _ NotPromoted (L _ name)) _ = ppDocName name
-ppr_mono_ty (HsTyVar _ Promoted    (L _ name)) _ = char '\'' <> ppDocName name
+ppr_mono_ty (HsTyVar _ IsPromoted  (L _ name)) _ = char '\'' <> ppDocName name
 ppr_mono_ty (HsTupleTy _ con tys) u = tupleParens con (map (ppLType u) tys)
 ppr_mono_ty (HsSumTy _ tys) u       = sumParens (map (ppLType u) tys)
 ppr_mono_ty (HsKindSig _ ty kind) u = parens (ppr_mono_lty ty u <+> dcolon u <+> ppLKind u kind)
@@ -1039,7 +1042,7 @@ ppr_mono_ty (HsIParamTy _ (L _ n) ty) u = brackets (ppIPName n <+> dcolon u <+> 
 ppr_mono_ty (HsSpliceTy {})     _ = error "ppr_mono_ty HsSpliceTy"
 ppr_mono_ty (HsRecTy {})        _ = text "{..}"
 ppr_mono_ty (XHsType (NHsCoreTy {}))  _ = error "ppr_mono_ty HsCoreTy"
-ppr_mono_ty (HsExplicitListTy _ Promoted tys) u = Pretty.quote $ brackets $ hsep $ punctuate comma $ map (ppLType u) tys
+ppr_mono_ty (HsExplicitListTy _ IsPromoted tys) u = Pretty.quote $ brackets $ hsep $ punctuate comma $ map (ppLType u) tys
 ppr_mono_ty (HsExplicitListTy _ NotPromoted tys) u = brackets $ hsep $ punctuate comma $ map (ppLType u) tys
 ppr_mono_ty (HsExplicitTupleTy _ tys) u = Pretty.quote $ parenList $ map (ppLType u) tys
 
@@ -1185,7 +1188,7 @@ parLatexMarkup ppId = Markup {
   markupOrderedList          = \p v -> enumeratedList (map ($v) p) $$ text "",
   markupDefList              = \l v -> descriptionList (map (\(a,b) -> (a v, b v)) l),
   markupCodeBlock            = \p _ -> quote (verb (p Verb)) $$ text "",
-  markupHyperlink            = \l _ -> markupLink l,
+  markupHyperlink            = \(Hyperlink u l) p -> markupLink u (fmap ($p) l),
   markupAName                = \_ _ -> empty,
   markupProperty             = \p _ -> quote $ verb $ text p,
   markupExample              = \e _ -> quote $ verb $ text $ unlines $ map exampleToString e,
@@ -1205,8 +1208,8 @@ parLatexMarkup ppId = Markup {
     fixString Verb  s = s
     fixString Mono  s = latexMonoFilter s
 
-    markupLink (Hyperlink url mLabel) = case mLabel of
-      Just label -> text "\\href" <> braces (text url) <> braces (text label)
+    markupLink url mLabel = case mLabel of
+      Just label -> text "\\href" <> braces (text url) <> braces label
       Nothing    -> text "\\url"  <> braces (text url)
 
     -- Is there a better way of doing this? Just a space is an aribtrary choice.

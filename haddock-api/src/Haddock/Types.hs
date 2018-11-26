@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP, DeriveDataTypeable, DeriveFunctor, DeriveFoldable, DeriveTraversable, StandaloneDeriving, TypeFamilies, RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-} -- Note [Pass sensitive types]
+{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -----------------------------------------------------------------------------
@@ -34,7 +35,7 @@ import Data.Map (Map)
 import Data.Data (Data)
 import qualified Data.Map as Map
 import Documentation.Haddock.Types
-import BasicTypes (Fixity(..))
+import BasicTypes (Fixity(..), PromotionFlag(..))
 
 import GHC hiding (NoLink)
 import DynFlags (Language)
@@ -467,7 +468,7 @@ instance NFData ModuleName where rnf x = seq x ()
 instance NFData id => NFData (Header id) where
   rnf (Header a b) = a `deepseq` b `deepseq` ()
 
-instance NFData Hyperlink where
+instance NFData id => NFData (Hyperlink id) where
   rnf (Hyperlink a b) = a `deepseq` b `deepseq` ()
 
 instance NFData Picture where
@@ -742,3 +743,19 @@ type instance XHsWC      DocNameI _ = NoExt
 type instance XHsQTvs        DocNameI = NoExt
 type instance XConDeclField  DocNameI = NoExt
 
+type instance XXPat DocNameI = Located (Pat DocNameI)
+
+type instance SrcSpanLess (LPat DocNameI) = Pat DocNameI
+instance HasSrcSpan (LPat DocNameI) where
+  -- NB: The following chooses the behaviour of the outer location
+  --     wrapper replacing the inner ones.
+  composeSrcSpan (L sp p) =  if sp == noSrcSpan
+                             then p
+                             else XPat (L sp (stripSrcSpanPat p))
+   -- NB: The following only returns the top-level location, if any.
+  decomposeSrcSpan (XPat (L sp p)) = L sp (stripSrcSpanPat p)
+  decomposeSrcSpan p               = L noSrcSpan  p
+
+stripSrcSpanPat :: LPat DocNameI -> Pat DocNameI
+stripSrcSpanPat (XPat (L _ p)) = stripSrcSpanPat p
+stripSrcSpanPat p              = p
