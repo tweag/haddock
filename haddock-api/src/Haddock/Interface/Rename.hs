@@ -218,17 +218,10 @@ renameMaybeInjectivityAnn :: Maybe (LInjectivityAnn GhcRn)
                           -> RnM (Maybe (LInjectivityAnn DocNameI))
 renameMaybeInjectivityAnn = traverse renameInjectivityAnn
 
-renameMult :: HsMult GhcRn -> RnM (HsMult DocNameI)
-renameMult t = case t of
-                HsZero -> return HsZero
-                HsOne  -> return HsOne
-                HsOmega -> return HsOmega
-                HsMultTy lty -> HsMultTy <$> renameLType lty
-
 renameArrow :: HsArrow GhcRn -> RnM (HsArrow DocNameI)
 renameArrow HsUnrestrictedArrow = return HsUnrestrictedArrow
 renameArrow HsLinearArrow = return HsLinearArrow
-renameArrow (HsExplicitMult p) = HsExplicitMult <$> renameMult p
+renameArrow (HsExplicitMult p) = HsExplicitMult <$> renameLType p
 
 renameType :: HsType GhcRn -> RnM (HsType DocNameI)
 renameType t = case t of
@@ -499,7 +492,7 @@ renameCon (XConDecl _) = panic "haddock:renameCon"
 
 renameHsScaled :: HsScaled GhcRn (LHsType GhcRn)
                -> RnM (HsScaled DocNameI (LHsType DocNameI))
-renameHsScaled (HsScaled w ty) = HsScaled <$> renameMult w <*> renameLType ty
+renameHsScaled (HsScaled w ty) = HsScaled <$> renameArrow w <*> renameLType ty
 
 renameDetails :: HsConDeclDetails GhcRn -> RnM (HsConDeclDetails DocNameI)
 renameDetails (RecCon (L l fields)) = do

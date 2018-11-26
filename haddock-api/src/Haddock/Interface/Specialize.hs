@@ -277,12 +277,8 @@ renameType (HsExplicitTupleTy x ltys) =
 renameType t@(HsTyLit _ _) = pure t
 renameType (HsWildCardTy wc) = pure (HsWildCardTy wc)
 
-renameMult :: HsMult GhcRn -> Rename (IdP GhcRn) (HsMult GhcRn)
-renameMult (HsMultTy t) = HsMultTy <$> renameLType t
-renameMult r = pure r
-
 renameHsArrow :: HsArrow GhcRn -> Rename (IdP GhcRn) (HsArrow GhcRn)
-renameHsArrow (HsExplicitMult p) = HsExplicitMult <$> renameMult p
+renameHsArrow (HsExplicitMult p) = HsExplicitMult <$> renameLType p
 renameHsArrow mult = pure mult
 
 

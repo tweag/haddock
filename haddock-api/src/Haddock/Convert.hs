@@ -567,9 +567,9 @@ synifyMult t = case t of
                 Zero -> error "synifyMult: 0"
                 One  -> HsLinearArrow
                 Omega -> HsUnrestrictedArrow
-                MultAdd r1 r2 -> error "synifyMult: Add"
-                MultMul r1 r2 -> error "synifyMult: Mul"
-                MultThing ty -> HsExplicitMult (HsMultTy (synifyType WithinType ty))
+                MultAdd _ _ -> error "synifyMult: Add"
+                MultMul _ _ -> error "synifyMult: Mul"
+                MultThing ty -> HsExplicitMult (synifyType WithinType ty)
 
 
 
