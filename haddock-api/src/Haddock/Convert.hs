@@ -319,7 +319,7 @@ synifyDataCon use_gadt_syntax dc =
 
   linear_tys =
     zipWith (\ty bang ->
-               let tySyn = (synifyType WithinType) (scaledThing ty) -- MattP: Check
+               let tySyn = (synifyType WithinType) (scaledThing ty)
                in case bang of
                     (HsSrcBang _ NoSrcUnpack NoSrcStrict) -> tySyn
                     bang' -> noLoc $ HsBangTy noExt bang' tySyn)

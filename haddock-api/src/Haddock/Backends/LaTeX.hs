@@ -44,8 +44,6 @@ import Multiplicity
 
 import Haddock.Doc (combineDocumentation)
 
---TODO: MattP - Linearity not taken into account
-
 -- import Debug.Trace
 
 {- SAMPLE OUTPUT
