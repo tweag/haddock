@@ -546,7 +546,7 @@ synifyType _ (FunTy w t1 t2) = let
   s1 = synifyType WithinType t1
   s2 = synifyType WithinType t2
   w'  = synifyMult w
-  in noLoc $ HsFunTy noExt s1 w' s2
+  in noLoc $ HsFunTy noExt w' s1 s2
 synifyType s forallty@(ForAllTy _tv _ty) =
   let (tvs, ctx, tau) = tcSplitSigmaTyPreserveSynonyms forallty
       sPhi = HsQualTy { hst_ctxt = synifyCtx ctx

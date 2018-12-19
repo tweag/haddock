@@ -164,14 +164,14 @@ ppSubSigLike unicode qual typ argDocs subdocs sep emptyCtxts = do_args 0 sep typ
       = (leader <+> ppLContextNoArrow lctxt unicode qual emptyCtxts, Nothing, [])
         : do_largs n (darrow unicode) ltype
 
-    do_args n leader (HsFunTy _ (L _ (HsRecTy _ fields)) _w r)
+    do_args n leader (HsFunTy _ _w (L _ (HsRecTy _ fields)) r)
       = [ (ldr <+> html, mdoc, subs)
         | (L _ field, ldr) <- zip fields (leader <+> gadtOpen : repeat gadtComma)
         , let (html, mdoc, subs) = ppSideBySideField subdocs unicode qual field
         ]
         ++ do_largs (n+1) (gadtEnd <+> arrow unicode) r
 
-    do_args n leader (HsFunTy _ lt _w r)
+    do_args n leader (HsFunTy _ _w lt r)
       = (leader <+> ppLFunLhType unicode qual emptyCtxts lt, argDoc n, [])
         : do_largs (n+1) (arrow unicode) r
 
@@ -1169,7 +1169,7 @@ ppr_mono_ty (HsTyVar _ _ (L _ name)) _ q _ =
   ppDocName q Prefix True name
 ppr_mono_ty (HsStarTy _ isUni) u _ _ =
   toHtml (if u || isUni then "★" else "*")
-ppr_mono_ty (HsFunTy _ ty1 _ ty2) u q e =
+ppr_mono_ty (HsFunTy _ _ ty1 ty2) u q e =
   hsep [ ppr_mono_lty ty1 u q HideEmptyContexts
        , arrow u <+> ppr_mono_lty ty2 u q e
        ]

@@ -487,13 +487,13 @@ ppSubSigLike unicode typ argDocs subdocs leader = do_args 0 leader typ
       = (decltt leader, ppLContextNoArrow lctxt unicode <+> nl)
         : do_largs n (darrow unicode) ltype
 
-    do_args n leader (HsFunTy _ (L _ (HsRecTy _ fields)) _w r)
+    do_args n leader (HsFunTy _ _w (L _ (HsRecTy _ fields)) r)
       = [ (decltt ldr, latex <+> nl)
         | (L _ field, ldr) <- zip fields (leader <+> gadtOpen : repeat gadtComma)
         , let latex = ppSideBySideField subdocs unicode field
         ]
         ++ do_largs (n+1) (gadtEnd <+> arrow unicode) r
-    do_args n leader (HsFunTy _ lt _w r)
+    do_args n leader (HsFunTy _ _w lt r)
       = (decltt leader, decltt (ppLFunLhType unicode lt) <-> arg_doc n <+> nl)
         : do_largs (n+1) (arrow unicode) r
     do_args n leader t
@@ -1025,7 +1025,7 @@ ppr_mono_ty (HsForAllTy _ tvs ty) unicode
 ppr_mono_ty (HsQualTy _ ctxt ty) unicode
   = sep [ ppLContext ctxt unicode
         , ppr_mono_lty ty unicode ]
-ppr_mono_ty (HsFunTy _ ty1 _ ty2)   u
+ppr_mono_ty (HsFunTy _ _ ty1 ty2)   u
   = sep [ ppr_mono_lty ty1 u
         , arrow u <+> ppr_mono_lty ty2 u ]
 

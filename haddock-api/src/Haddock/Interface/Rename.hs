@@ -243,11 +243,11 @@ renameType t = case t of
     b' <- renameLType b
     return (HsAppTy NoExt a' b')
 
-  HsFunTy _ a w b -> do
+  HsFunTy _ w a b -> do
     a' <- renameLType a
     b' <- renameLType b
     w' <- renameArrow w
-    return (HsFunTy NoExt a' w' b')
+    return (HsFunTy NoExt w' a' b')
 
   HsListTy _ ty -> return . (HsListTy NoExt) =<< renameLType ty
   HsIParamTy _ n ty -> liftM (HsIParamTy NoExt n) (renameLType ty)

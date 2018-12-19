@@ -79,7 +79,7 @@ dropHsDocTy = f
         f (HsQualTy x a e) = HsQualTy x a (g e)
         f (HsBangTy x a b) = HsBangTy x a (g b)
         f (HsAppTy x a b) = HsAppTy x (g a) (g b)
-        f (HsFunTy x a w b) = HsFunTy x (g a) w (g b)
+        f (HsFunTy x w a b) = HsFunTy x w (g a) (g b)
         f (HsListTy x a) = HsListTy x (g a)
         f (HsTupleTy x a b) = HsTupleTy x a (map g b)
         f (HsOpTy x a b c) = HsOpTy x (g a) b (g c)
@@ -256,7 +256,7 @@ ppCtor dflags dat subdocs con@ConDeclH98 {}
                            [out dflags (map (extFieldOcc . unLoc) $ cd_fld_names r) `typeSig` [resType, cd_fld_type r]]
                           | r <- map unLoc recs]
 
-        funs = foldr1 (\x y -> reL $ HsFunTy NoExt x HsUnrestrictedArrow y)
+        funs = foldr1 (\x y -> reL $ HsFunTy NoExt HsUnrestrictedArrow x y)
         apps = foldl1 (\x y -> reL $ HsAppTy NoExt x y)
 
         typeSig nm flds = operator nm ++ " :: " ++ outHsType dflags (unL $ funs flds)

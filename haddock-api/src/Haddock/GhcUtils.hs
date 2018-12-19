@@ -194,7 +194,7 @@ getGADTConType (ConDeclGADT { con_forall = L _ has_forall
               InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
 
    -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy a HsUnrestrictedArrow b
+   mk_fun_ty a b = nlHsFunTy HsUnrestrictedArrow a b
 
 getGADTConType (ConDeclH98 {}) = panic "getGADTConType"
   -- Should only be called on ConDeclGADT
@@ -228,7 +228,7 @@ getGADTConTypeG (ConDeclGADT { con_forall = L _ has_forall
               InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
 
    -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy a HsUnrestrictedArrow b
+   mk_fun_ty a b = nlHsFunTy HsUnrestrictedArrow a b
 
 getGADTConTypeG (ConDeclH98 {}) = panic "getGADTConTypeG"
   -- Should only be called on ConDeclGADT
@@ -281,8 +281,8 @@ reparenTypePrec = go
     = paren p PREC_CTX $ HsForAllTy x (map (fmap reparenTyVar) tvs) (reparenLType ty)
   go p (HsQualTy x ctxt ty)
     = paren p PREC_FUN $ HsQualTy x (fmap (map reparenLType) ctxt) (reparenLType ty)
-  go p (HsFunTy x ty1 w ty2)
-    = paren p PREC_FUN $ HsFunTy x (goL PREC_FUN ty1) w (goL PREC_TOP ty2)
+  go p (HsFunTy x w ty1 ty2)
+    = paren p PREC_FUN $ HsFunTy x w (goL PREC_FUN ty1) (goL PREC_TOP ty2)
   go p (HsAppTy x fun_ty arg_ty)
     = paren p PREC_CON $ HsAppTy x (goL PREC_FUN fun_ty) (goL PREC_CON arg_ty)
   go p (HsOpTy x ty1 op ty2)

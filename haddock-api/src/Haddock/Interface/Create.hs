@@ -513,7 +513,7 @@ typeDocs = go 0
   where
     go n (HsForAllTy { hst_body = ty }) = go n (unLoc ty)
     go n (HsQualTy   { hst_body = ty }) = go n (unLoc ty)
-    go n (HsFunTy _ (L _ (HsDocTy _ _ (L _ x))) _w (L _ ty)) = M.insert n x $ go (n+1) ty
+    go n (HsFunTy _ _w (L _ (HsDocTy _ _ (L _ x))) (L _ ty)) = M.insert n x $ go (n+1) ty
     go n (HsFunTy _ _ _ ty) = go (n+1) (unLoc ty)
     go n (HsDocTy _ _ (L _ doc)) = M.singleton n doc
     go _ _ = M.empty
@@ -1142,7 +1142,7 @@ extractPatternSyn nm t tvs cons =
     in PatSynSig noExt [noLoc nm] (mkEmptyImplicitBndrs typ'')
 
   longArrow :: (XFunTy name ~ NoExt) => [LHsType name] -> LHsType name -> LHsType name
-  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt x HsUnrestrictedArrow y)) output inputs
+  longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExt HsUnrestrictedArrow x y)) output inputs
 
   data_ty con
     | ConDeclGADT{} <- con = con_res_ty con
@@ -1155,7 +1155,7 @@ extractRecSel _ _ _ [] = error "extractRecSel: selector not found"
 extractRecSel nm t tvs (L _ con : rest) =
   case getConArgs con of
     RecCon (L _ fields) | ((l,L _ (ConDeclField _ _nn ty _)) : _) <- matching_fields fields ->
-      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt data_ty HsUnrestrictedArrow (getBangType ty)))))
+      L l (TypeSig noExt [noLoc nm] (mkEmptySigWcType (noLoc (HsFunTy noExt HsUnrestrictedArrow data_ty (getBangType ty)))))
     _ -> extractRecSel nm t tvs rest
  where
   matching_fields :: [LConDeclField GhcRn] -> [(SrcSpan, LConDeclField GhcRn)]
