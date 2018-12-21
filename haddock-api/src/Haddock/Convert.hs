@@ -565,12 +565,9 @@ synifyType _ (CoercionTy {}) = error "synifyType:Coercion"
 
 synifyMult :: Mult -> HsArrow GhcRn
 synifyMult t = case t of
-                Zero -> error "synifyMult: 0"
                 One  -> HsLinearArrow
                 Omega -> HsUnrestrictedArrow
-                MultAdd _ _ -> error "synifyMult: Add"
-                MultMul _ _ -> error "synifyMult: Mul"
-                MultThing ty -> HsExplicitMult (synifyType WithinType ty)
+                ty -> HsExplicitMult (synifyType WithinType (fromMult ty))
 
 
 
