@@ -203,7 +203,7 @@ argCount (CastTy t _)    = argCount t
 argCount _ = 0
 
 simplify :: Type -> SimpleType
-simplify (FunTy w t1 t2)  = SimpleType funTyConName [simplify t1, simplify t2]
+simplify (FunTy _ t1 t2)  = SimpleType funTyConName [simplify t1, simplify t2]
 simplify (ForAllTy _ t) = simplify t
 simplify (AppTy t1 t2) = SimpleType s (ts ++ maybeToList (simplify_maybe t2))
   where (SimpleType s ts) = simplify t1
