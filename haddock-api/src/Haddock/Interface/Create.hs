@@ -61,7 +61,6 @@ import TcRnTypes
 import FastString ( unpackFS, fastStringToByteString)
 import BasicTypes ( StringLiteral(..), SourceText(..), PromotionFlag(..) )
 import qualified Outputable as O
-import HsDecls ( getConArgs )
 
 import Multiplicity
 
@@ -119,7 +118,7 @@ createInterface tm flags modMap instIfaceMap = do
 
   let declsWithDocs = topDecls group_
 
-      exports0 = fmap (reverse . map (first unLoc)) mayExports
+      exports0 = fmap (map (first unLoc)) mayExports
       exports
         | OptIgnoreExports `elem` opts = Nothing
         | otherwise = exports0
@@ -1079,8 +1078,8 @@ extractDecl declMap name decl
       TyClD _ d@DataDecl {} ->
         let (n, tyvar_tys) = (tcdName d, lHsQTyVarsToTypes (tyClDeclTyVars d))
         in if isDataConName name
-           then SigD noExt <$> extractPatternSyn name n tyvar_tys (dd_cons (tcdDataDefn d))
-           else SigD noExt <$> extractRecSel name n tyvar_tys (dd_cons (tcdDataDefn d))
+           then SigD noExt <$> extractPatternSyn name n (map HsValArg tyvar_tys) (dd_cons (tcdDataDefn d))
+           else SigD noExt <$> extractRecSel name n (map HsValArg tyvar_tys) (dd_cons (tcdDataDefn d))
       TyClD _ FamDecl {}
         | isValName name
         , Just (famInst:_) <- M.lookup name declMap
@@ -1115,10 +1114,11 @@ extractDecl declMap name decl
             in case matches of
               [d0] -> extractDecl declMap name (noLoc . InstD noExt $ DataFamInstD noExt d0)
               _ -> error "internal: extractDecl (ClsInstD)"
-      _ -> error "internal: extractDecl"
+      _ -> O.pprPanic "extractDecl" $
+        O.text "Unhandled decl for" O.<+> O.ppr name O.<> O.text ":"
+        O.$$ O.nest 4 (O.ppr decl)
 
-
-extractPatternSyn :: Name -> Name -> [LHsType GhcRn] -> [LConDecl GhcRn] -> LSig GhcRn
+extractPatternSyn :: Name -> Name -> [LHsTypeArg GhcRn] -> [LConDecl GhcRn] -> LSig GhcRn
 extractPatternSyn nm t tvs cons =
   case filter matches cons of
     [] -> error "extractPatternSyn: constructor pattern not found"
@@ -1146,9 +1146,13 @@ extractPatternSyn nm t tvs cons =
 
   data_ty con
     | ConDeclGADT{} <- con = con_res_ty con
-    | otherwise = foldl' (\x y -> noLoc (HsAppTy noExt x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
+    | otherwise = foldl' (\x y -> noLoc (mkAppTyArg x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
+                    where mkAppTyArg :: LHsType GhcRn -> LHsTypeArg GhcRn -> HsType GhcRn
+                          mkAppTyArg f (HsValArg ty) = HsAppTy noExt f ty
+                          mkAppTyArg f (HsTypeArg ki) = HsAppKindTy noExt f ki
+                          mkAppTyArg f (HsArgPar _) = HsParTy noExt f
 
-extractRecSel :: Name -> Name -> [LHsType GhcRn] -> [LConDecl GhcRn]
+extractRecSel :: Name -> Name -> [LHsTypeArg GhcRn] -> [LConDecl GhcRn]
               -> LSig GhcRn
 extractRecSel _ _ _ [] = error "extractRecSel: selector not found"
 
@@ -1164,7 +1168,11 @@ extractRecSel nm t tvs (L _ con : rest) =
   data_ty
     -- ResTyGADT _ ty <- con_res con = ty
     | ConDeclGADT{} <- con = con_res_ty con
-    | otherwise = foldl' (\x y -> noLoc (HsAppTy noExt x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
+    | otherwise = foldl' (\x y -> noLoc (mkAppTyArg x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
+                   where mkAppTyArg :: LHsType GhcRn -> LHsTypeArg GhcRn -> HsType GhcRn
+                         mkAppTyArg f (HsValArg ty) = HsAppTy noExt f ty
+                         mkAppTyArg f (HsTypeArg ki) = HsAppKindTy noExt f ki
+                         mkAppTyArg f (HsArgPar _) = HsParTy noExt f 
 
 -- | Keep export items with docs.
 pruneExportItems :: [ExportItem GhcRn] -> [ExportItem GhcRn]

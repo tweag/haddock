@@ -15,6 +15,7 @@ import Haddock.Types
 import GHC
 import Name
 import FastString
+import TysWiredIn ( listTyConName, unrestrictedFunTyConName )
 
 import Control.Monad
 import Control.Monad.Trans.State
@@ -110,10 +111,7 @@ sugar = sugarOperators . sugarTuples . sugarLists
 
 sugarLists :: NamedThing (IdP (GhcPass p)) => HsType (GhcPass p) -> HsType (GhcPass p)
 sugarLists (HsAppTy _ (L _ (HsTyVar _ _ (L _ name))) ltyp)
-    | isBuiltInSyntax name' && strName == "[]" = HsListTy NoExt ltyp
-  where
-    name' = getName name
-    strName = occNameString . nameOccName $ name'
+    | getName name == listTyConName = HsListTy NoExt ltyp
 sugarLists typ = typ
 
 
@@ -127,7 +125,7 @@ sugarTuples typ =
         | isBuiltInSyntax name' && suitable = HsTupleTy NoExt HsBoxedTuple apps
       where
         name' = getName name
-        strName = occNameString . nameOccName $ name'
+        strName = getOccString name
         suitable = case parseTupleArity strName of
             Just arity -> arity == length apps
             Nothing -> False
@@ -137,7 +135,7 @@ sugarTuples typ =
 sugarOperators :: NamedThing (IdP (GhcPass p)) => HsType (GhcPass p) -> HsType (GhcPass p)
 sugarOperators (HsAppTy _ (L _ (HsAppTy _ (L _ (HsTyVar _ _ (L l name))) la)) lb)
     | isSymOcc $ getOccName name' = mkHsOpTy la (L l name) lb
-    | isBuiltInSyntax name' && getOccString name == "(->)" = HsFunTy NoExt HsUnrestrictedArrow la lb
+    | unrestrictedFunTyConName == name' = HsFunTy NoExt HsUnrestrictedArrow la lb
   where
     name' = getName name
 sugarOperators typ = typ
@@ -182,7 +180,7 @@ parseTupleArity _ = Nothing
 type NameRep = FastString
 
 getNameRep :: NamedThing name => name -> NameRep
-getNameRep = occNameFS . getOccName
+getNameRep = getOccFS
 
 nameRepString :: NameRep -> String
 nameRepString = unpackFS
@@ -256,6 +254,7 @@ renameType (HsQualTy x lctxt lt) =
 renameType (HsTyVar x ip name) = HsTyVar x ip <$> located renameName name
 renameType t@(HsStarTy _ _) = pure t
 renameType (HsAppTy x lf la) = HsAppTy x <$> renameLType lf <*> renameLType la
+renameType (HsAppKindTy x lt lk) = HsAppKindTy x <$> renameLType lt <*> renameLKind lk
 renameType (HsFunTy x w la lr) = HsFunTy x <$> renameHsArrow w <*> renameLType la <*> renameLType lr
 renameType (HsListTy x lt) = HsListTy x <$> renameLType lt
 renameType (HsTupleTy x srt lt) = HsTupleTy x srt <$> mapM renameLType lt
@@ -285,6 +284,8 @@ renameHsArrow mult = pure mult
 renameLType :: LHsType GhcRn -> Rename (IdP GhcRn) (LHsType GhcRn)
 renameLType = located renameType
 
+renameLKind :: LHsKind GhcRn -> Rename (IdP GhcRn) (LHsKind GhcRn)
+renameLKind = renameLType
 
 renameLTypes :: [LHsType GhcRn] -> Rename (IdP GhcRn) [LHsType GhcRn]
 renameLTypes = mapM renameLType

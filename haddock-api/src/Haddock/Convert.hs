@@ -127,7 +127,7 @@ synifyAxBranch tc (CoAxBranch { cab_tvs = tkvs, cab_lhs = args, cab_rhs = rhs })
                                    , feqn_tycon  = name
                                    , feqn_bndrs  = Nothing
                                        -- this must change eventually
-                                   , feqn_pats   = annot_typats
+                                   , feqn_pats   = map HsValArg annot_typats
                                    , feqn_fixity = Prefix
                                    , feqn_rhs    = hs_rhs } }
   where
@@ -502,9 +502,10 @@ synifyType _ (TyConApp tc tys)
                    tys_rest
       -- Most TyCons:
       | otherwise
-      = mk_app_tys (HsTyVar noExt NotPromoted $ noLoc (getName tc))
+      = mk_app_tys (HsTyVar noExt prom $ noLoc (getName tc))
                    vis_tys
       where
+        prom = if isPromotedDataCon tc then IsPromoted else NotPromoted
         mk_app_tys ty_app ty_args =
           foldl (\t1 t2 -> noLoc $ HsAppTy noExt t1 t2)
                 (noLoc ty_app)

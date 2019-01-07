@@ -34,7 +34,7 @@ import qualified Data.Map as Map
 import           Data.Maybe
 import           Text.XHtml hiding     ( name, title, p, quote )
 
-import BasicTypes (PromotionFlag(..))
+import BasicTypes (PromotionFlag(..), isPromoted)
 import GHC hiding (LexicalFixity(..))
 import GHC.Exts
 import Name
@@ -316,7 +316,7 @@ ppFamDecl summary associated links instances fixities loc doc decl splice unicod
     ppFamDeclEqn (HsIB { hsib_body = FamEqn { feqn_tycon = L _ n
                                             , feqn_rhs = rhs
                                             , feqn_pats = ts } })
-      = ( ppAppNameTypes n (map unLoc ts) unicode qual
+      = ( ppAppNameTypeArgs n ts unicode qual
           <+> equals <+> ppType unicode qual HideEmptyContexts (unLoc rhs)
         , Nothing
         , []
@@ -419,6 +419,11 @@ ppAppNameTypes :: DocName -> [HsType DocNameI] -> Unicode -> Qualification -> Ht
 ppAppNameTypes n ts unicode qual =
     ppTypeApp n ts (\p -> ppDocName qual p True) (ppParendType unicode qual HideEmptyContexts)
 
+ppAppNameTypeArgs :: DocName -> [LHsTypeArg DocNameI] -> Unicode -> Qualification -> Html
+ppAppNameTypeArgs n args@(HsValArg _:HsValArg _:_) u q
+  = ppTypeApp n args (\p -> ppDocName q p True) (ppLHsTypeArg u q HideEmptyContexts)
+ppAppNameTypeArgs n args u q
+  = (ppDocName q Prefix True n) <+> hsep (map (ppLHsTypeArg u q HideEmptyContexts) args)
 
 -- | General printing of type applications
 ppTypeApp :: DocName -> [a] -> (Notation -> DocName -> Html) -> (a -> Html) -> Html
@@ -430,7 +435,6 @@ ppTypeApp n (t1:t2:rest) ppDN ppT
     opApp = ppT t1 <+> ppDN Infix n <+> ppT t2
 
 ppTypeApp n ts ppDN ppT = ppDN Prefix n <+> hsep (map ppT ts)
-
 
 -------------------------------------------------------------------------------
 -- * Contexts
@@ -697,7 +701,7 @@ instanceId origin no orphan ihd = concat $
     [ "o:" | orphan ] ++
     [ qual origin
     , ":" ++ getOccString origin
-    , ":" ++ (occNameString . getOccName . ihdClsName) ihd
+    , ":" ++ getOccString (ihdClsName ihd)
     , ":" ++ show no
     ]
   where
@@ -1105,6 +1109,11 @@ ppType       unicode qual emptyCtxts ty = ppr_mono_ty (reparenTypePrec PREC_TOP 
 ppParendType unicode qual emptyCtxts ty = ppr_mono_ty (reparenTypePrec PREC_CON ty) unicode qual emptyCtxts
 ppFunLhType  unicode qual emptyCtxts ty = ppr_mono_ty (reparenTypePrec PREC_FUN ty) unicode qual emptyCtxts
 
+ppLHsTypeArg :: Unicode -> Qualification -> HideEmptyContexts -> LHsTypeArg DocNameI -> Html
+ppLHsTypeArg unicode qual emptyCtxts (HsValArg ty) = ppLParendType unicode qual emptyCtxts ty
+ppLHsTypeArg unicode qual emptyCtxts (HsTypeArg ki) = atSign unicode <>
+                                                     ppLParendType unicode qual emptyCtxts ki
+ppLHsTypeArg _ _ _ (HsArgPar _) = toHtml ""
 ppHsTyVarBndr :: Unicode -> Qualification -> HsTyVarBndr DocNameI -> Html
 ppHsTyVarBndr _       qual (UserTyVar _ (L _ name)) =
     ppDocName qual Raw False name
@@ -1165,8 +1174,9 @@ ppr_mono_ty (HsTyVar _ _ (L _ name)) True _ _
 
 ppr_mono_ty (HsBangTy _ b ty) u q _ =
   ppBang b +++ ppLParendType u q HideEmptyContexts ty
-ppr_mono_ty (HsTyVar _ _ (L _ name)) _ q _ =
-  ppDocName q Prefix True name
+ppr_mono_ty (HsTyVar _ prom (L _ name)) _ q _
+  | isPromoted prom = promoQuote (ppDocName q Prefix True name)
+  | otherwise = ppDocName q Prefix True name
 ppr_mono_ty (HsStarTy _ isUni) u _ _ =
   toHtml (if u || isUni then "★" else "*")
 ppr_mono_ty (HsFunTy _ _ ty1 ty2) u q e =
@@ -1196,6 +1206,10 @@ ppr_mono_ty (HsAppTy _ fun_ty arg_ty) unicode qual _
   = hsep [ ppr_mono_lty fun_ty unicode qual HideEmptyContexts
          , ppr_mono_lty arg_ty unicode qual HideEmptyContexts ]
 
+ppr_mono_ty (HsAppKindTy _ fun_ty arg_ki) unicode qual _
+  = hsep [ppr_mono_lty fun_ty unicode qual HideEmptyContexts
+         , atSign unicode <> ppr_mono_lty arg_ki unicode qual HideEmptyContexts]
+
 ppr_mono_ty (HsOpTy _ ty1 op ty2) unicode qual _
   = ppr_mono_lty ty1 unicode qual HideEmptyContexts <+> ppr_op <+> ppr_mono_lty ty2 unicode qual HideEmptyContexts
   where
@@ -1213,7 +1227,7 @@ ppr_mono_ty (HsParTy _ ty) unicode qual emptyCtxts
 ppr_mono_ty (HsDocTy _ ty _) unicode qual emptyCtxts
   = ppr_mono_lty ty unicode qual emptyCtxts
 
-ppr_mono_ty (HsWildCardTy (AnonWildCard _)) _ _ _ = char '_'
+ppr_mono_ty (HsWildCardTy _) _ _ _ = char '_'
 ppr_mono_ty (HsTyLit _ n) _ _ _ = ppr_tylit n
 
 ppr_tylit :: HsTyLit -> Html
