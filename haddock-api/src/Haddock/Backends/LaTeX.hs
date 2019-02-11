@@ -961,7 +961,7 @@ ppContext cxt unicode = ppContextNoLocs (map unLoc cxt) unicode
 
 pp_hs_context :: [HsType DocNameI] -> Bool -> LaTeX
 pp_hs_context []  _       = empty
-pp_hs_context [p] unicode = ppType unicode p
+pp_hs_context [p] unicode = ppCtxType unicode p
 pp_hs_context cxt unicode = parenList (map (ppType unicode) cxt)
 
 
@@ -996,17 +996,17 @@ ppLType       unicode y = ppType unicode (unLoc y)
 ppLParendType unicode y = ppParendType unicode (unLoc y)
 ppLFunLhType  unicode y = ppFunLhType unicode (unLoc y)
 
-
-ppType, ppParendType, ppFunLhType :: Bool -> HsType DocNameI -> LaTeX
+ppType, ppParendType, ppFunLhType, ppCtxType :: Bool -> HsType DocNameI -> LaTeX
 ppType       unicode ty = ppr_mono_ty (reparenTypePrec PREC_TOP ty) unicode
 ppParendType unicode ty = ppr_mono_ty (reparenTypePrec PREC_TOP ty) unicode
 ppFunLhType  unicode ty = ppr_mono_ty (reparenTypePrec PREC_FUN ty) unicode
+ppCtxType    unicode ty = ppr_mono_ty (reparenTypePrec PREC_CTX ty) unicode
 
 ppLHsTypeArg :: Bool -> LHsTypeArg DocNameI -> LaTeX
 ppLHsTypeArg unicode (HsValArg ty) = ppLParendType unicode ty
-ppLHsTypeArg unicode (HsTypeArg ki) = atSign unicode <>
-                                     ppLParendType unicode ki
-ppLHsTypeArg _ (HsArgPar _) = text ""                                     
+ppLHsTypeArg unicode (HsTypeArg _ ki) = atSign unicode <>
+                                       ppLParendType unicode ki
+ppLHsTypeArg _ (HsArgPar _) = text ""
 
 ppHsTyVarBndr :: Bool -> HsTyVarBndr DocNameI -> LaTeX
 ppHsTyVarBndr _ (UserTyVar _ (L _ name)) = ppDocName name
@@ -1046,7 +1046,7 @@ ppr_mono_ty (HsTupleTy _ con tys) u = tupleParens con (map (ppLType u) tys)
 ppr_mono_ty (HsSumTy _ tys) u       = sumParens (map (ppLType u) tys)
 ppr_mono_ty (HsKindSig _ ty kind) u = parens (ppr_mono_lty ty u <+> dcolon u <+> ppLKind u kind)
 ppr_mono_ty (HsListTy _ ty)       u = brackets (ppr_mono_lty ty u)
-ppr_mono_ty (HsIParamTy _ (L _ n) ty) u = brackets (ppIPName n <+> dcolon u <+> ppr_mono_lty ty u)
+ppr_mono_ty (HsIParamTy _ (L _ n) ty) u = ppIPName n <+> dcolon u <+> ppr_mono_lty ty u
 ppr_mono_ty (HsSpliceTy {})     _ = error "ppr_mono_ty HsSpliceTy"
 ppr_mono_ty (HsRecTy {})        _ = text "{..}"
 ppr_mono_ty (XHsType (NHsCoreTy {}))  _ = error "ppr_mono_ty HsCoreTy"
@@ -1111,7 +1111,7 @@ ppVerbOccName :: OccName -> LaTeX
 ppVerbOccName = text . latexFilter . occNameString
 
 ppIPName :: HsIPName -> LaTeX
-ppIPName ip = text $ unpackFS $ hsIPNameFS ip
+ppIPName = text . ('?':) . unpackFS . hsIPNameFS
 
 ppOccName :: OccName -> LaTeX
 ppOccName = text . occNameString

@@ -20,27 +20,21 @@
 module Haddock.Interface.Create (createInterface) where
 
 import Documentation.Haddock.Doc (metaDocAppend)
-import Documentation.Haddock.Utf8 as Utf8
 import Haddock.Types
 import Haddock.Options
 import Haddock.GhcUtils
 import Haddock.Utils
 import Haddock.Convert
 import Haddock.Interface.LexParseRn
-import Haddock.Backends.Hyperlinker.Types
-import Haddock.Backends.Hyperlinker.Ast as Hyperlinker
-import Haddock.Backends.Hyperlinker.Parser as Hyperlinker
 
 import Data.Bifunctor
 import Data.Bitraversable
-import qualified Data.ByteString as BS
 import qualified Data.Map as M
 import Data.Map (Map)
 import Data.List
 import Data.Maybe
 import Data.Ord
 import Control.Applicative
-import Control.Exception (evaluate)
 import Control.Monad
 import Data.Traversable
 
@@ -171,8 +165,6 @@ createInterface tm flags modMap instIfaceMap = do
 
   modWarn <- liftErrMsg (moduleWarning dflags gre warnings)
 
-  tokenizedSrc <- mkMaybeTokenizedSrc dflags flags tm
-
   return $! Interface {
     ifaceMod               = mdl
   , ifaceIsSig             = is_sig
@@ -198,7 +190,8 @@ createInterface tm flags modMap instIfaceMap = do
   , ifaceRnOrphanInstances = [] -- Filled in `renameInterface`
   , ifaceHaddockCoverage   = coverage
   , ifaceWarningMap        = warningMap
-  , ifaceTokenizedSrc      = tokenizedSrc
+  , ifaceHieFile           = Just $ ml_hie_file $ ms_location ms
+  , ifaceDynFlags          = dflags
   }
 
 
@@ -900,7 +893,7 @@ hiDecl dflags t = do
     Nothing -> do
       liftErrMsg $ tell ["Warning: Not found in environment: " ++ pretty dflags t]
       return Nothing
-    Just x -> case tyThingToLHsDecl x of
+    Just x -> case tyThingToLHsDecl ShowRuntimeRep x of
       Left m -> liftErrMsg (tell [bugWarn m]) >> return Nothing
       Right (m, t') -> liftErrMsg (tell $ map bugWarn m)
                       >> return (Just $ noLoc t')
@@ -1149,7 +1142,7 @@ extractPatternSyn nm t tvs cons =
     | otherwise = foldl' (\x y -> noLoc (mkAppTyArg x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
                     where mkAppTyArg :: LHsType GhcRn -> LHsTypeArg GhcRn -> HsType GhcRn
                           mkAppTyArg f (HsValArg ty) = HsAppTy noExt f ty
-                          mkAppTyArg f (HsTypeArg ki) = HsAppKindTy noExt f ki
+                          mkAppTyArg f (HsTypeArg l ki) = HsAppKindTy l f ki
                           mkAppTyArg f (HsArgPar _) = HsParTy noExt f
 
 extractRecSel :: Name -> Name -> [LHsTypeArg GhcRn] -> [LConDecl GhcRn]
@@ -1171,8 +1164,8 @@ extractRecSel nm t tvs (L _ con : rest) =
     | otherwise = foldl' (\x y -> noLoc (mkAppTyArg x y)) (noLoc (HsTyVar noExt NotPromoted (noLoc t))) tvs
                    where mkAppTyArg :: LHsType GhcRn -> LHsTypeArg GhcRn -> HsType GhcRn
                          mkAppTyArg f (HsValArg ty) = HsAppTy noExt f ty
-                         mkAppTyArg f (HsTypeArg ki) = HsAppKindTy noExt f ki
-                         mkAppTyArg f (HsArgPar _) = HsParTy noExt f 
+                         mkAppTyArg f (HsTypeArg l ki) = HsAppKindTy l f ki
+                         mkAppTyArg f (HsArgPar _) = HsParTy noExt f
 
 -- | Keep export items with docs.
 pruneExportItems :: [ExportItem GhcRn] -> [ExportItem GhcRn]
@@ -1201,34 +1194,6 @@ mkVisibleNames (_, _, _, instMap) exports opts
 seqList :: [a] -> ()
 seqList [] = ()
 seqList (x : xs) = x `seq` seqList xs
-
-mkMaybeTokenizedSrc :: DynFlags -> [Flag] -> TypecheckedModule
-                    -> ErrMsgGhc (Maybe [RichToken])
-mkMaybeTokenizedSrc dflags flags tm
-    | Flag_HyperlinkedSource `elem` flags = case renamedSource tm of
-        Just src -> do
-            tokens <- liftGhcToErrMsgGhc (liftIO (mkTokenizedSrc dflags summary src))
-            return $ Just tokens
-        Nothing -> do
-            liftErrMsg . tell . pure $ concat
-                [ "Warning: Cannot hyperlink module \""
-                , moduleNameString . ms_mod_name $ summary
-                , "\" because renamed source is not available"
-                ]
-            return Nothing
-    | otherwise = return Nothing
-  where
-    summary = pm_mod_summary . tm_parsed_module $ tm
-
-mkTokenizedSrc :: DynFlags -> ModSummary -> RenamedSource -> IO [RichToken]
-mkTokenizedSrc dflags ms src = do
-  -- make sure to read the whole file at once otherwise
-  -- we run out of file descriptors (see #495)
-  rawSrc <- BS.readFile (msHsFilePath ms) >>= evaluate
-  let tokens = Hyperlinker.parse dflags filepath (Utf8.decodeUtf8 rawSrc)
-  return $ Hyperlinker.enrich src tokens
-  where
-    filepath = msHsFilePath ms
 
 -- | Find a stand-alone documentation comment by its name.
 findNamedDoc :: String -> [HsDecl GhcRn] -> ErrMsgM (Maybe HsDocString)
