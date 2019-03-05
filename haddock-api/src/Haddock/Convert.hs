@@ -612,12 +612,12 @@ synifyType _ vs (AppTy t1 t2) = let
   s1 = synifyType WithinType vs t1
   s2 = synifyType WithinType vs t2
   in noLoc $ HsAppTy noExt s1 s2
-synifyType s vs funty@(FunTy w t1 t2)
-  | isPredTy t1 = synifyForAllType s vs funty
-  | otherwise = let s1 = synifyType WithinType vs t1
-                    s2 = synifyType WithinType vs t2
-                    w' = synifyMult vs w
-                in noLoc $ HsFunTy noExt w' s1 s2
+synifyType s vs funty@(FunTy InvisArg _ _ _) = synifyForAllType s vs funty
+synifyType _ vs       (FunTy VisArg w t1 t2) = let
+  s1 = synifyType WithinType vs t1
+  s2 = synifyType WithinType vs t2
+  w' = synifyMult vs w
+  in noLoc $ HsFunTy noExt w' s1 s2
 synifyType s vs forallty@(ForAllTy _tv _ty) = synifyForAllType s vs forallty
 
 synifyType _ _ (LitTy t) = noLoc $ HsTyLit noExt $ synifyTyLit t
@@ -723,9 +723,9 @@ noKindTyVars ts ty
                  _ -> noKindTyVars ts f
     in unionVarSets (func : args)
 noKindTyVars ts (ForAllTy _ t) = noKindTyVars ts t
-noKindTyVars ts (FunTy w t1 t2) = noKindTyVars ts (fromMult w) `unionVarSet`
-                                  noKindTyVars ts t1 `unionVarSet`
-                                  noKindTyVars ts t2
+noKindTyVars ts (FunTy _ w t1 t2) = noKindTyVars ts (fromMult w) `unionVarSet`
+                                    noKindTyVars ts t1 `unionVarSet`
+                                    noKindTyVars ts t2
 noKindTyVars ts (CastTy t _) = noKindTyVars ts t
 noKindTyVars _ _ = emptyVarSet
 
@@ -752,7 +752,7 @@ synifyPatSynType ps =
 
   in implicitForAll ts [] (univ_tvs ++ ex_tvs) req_theta'
        (\vs -> implicitForAll ts vs [] prov_theta (synifyType WithinType))
-       (mkFunTys arg_tys res_ty)
+       (mkVisFunTys arg_tys res_ty)
 
 synifyTyLit :: TyLit -> HsTyLit
 synifyTyLit (NumTyLit n) = HsNumTy NoSourceText n
@@ -865,7 +865,5 @@ tcSplitPhiTyPreserveSynonyms ty0 = split ty0 []
 
 -- | See Note [Invariant: Never expand type synonyms]
 tcSplitPredFunTyPreserveSynonyms_maybe :: Type -> Maybe (PredType, Type)
-tcSplitPredFunTyPreserveSynonyms_maybe (FunTy _ arg res)
-  | isPredTy arg = Just (arg, res)
-tcSplitPredFunTyPreserveSynonyms_maybe _
-  = Nothing
+tcSplitPredFunTyPreserveSynonyms_maybe (FunTy InvisArg _ arg res) = Just (arg, res)
+tcSplitPredFunTyPreserveSynonyms_maybe _ = Nothing
