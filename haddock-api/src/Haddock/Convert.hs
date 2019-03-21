@@ -724,7 +724,7 @@ noKindTyVars ts ty
                  _ -> noKindTyVars ts f
     in unionVarSets (func : args)
 noKindTyVars ts (ForAllTy _ t) = noKindTyVars ts t
-noKindTyVars ts (FunTy _ w t1 t2) = noKindTyVars ts (fromMult w) `unionVarSet`
+noKindTyVars ts (FunTy _ w t1 t2) = noKindTyVars ts w `unionVarSet`
                                     noKindTyVars ts t1 `unionVarSet`
                                     noKindTyVars ts t2
 noKindTyVars ts (CastTy t _) = noKindTyVars ts t
@@ -734,7 +734,7 @@ synifyMult :: [TyVar] -> Mult -> HsArrow GhcRn
 synifyMult vs t = case t of
                     One  -> HsLinearArrow
                     Omega -> HsUnrestrictedArrow
-                    ty -> HsExplicitMult (synifyType WithinType vs (fromMult ty))
+                    ty -> HsExplicitMult (synifyType WithinType vs ty)
 
 
 
