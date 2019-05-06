@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns, StandaloneDeriving, FlexibleInstances, ViewPatterns #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_HADDOCK hide #-}
 -----------------------------------------------------------------------------
@@ -191,12 +190,11 @@ getGADTConType (ConDeclGADT { con_forall = L _ has_forall
 
 --   tau_ty :: LHsType DocNameI
    tau_ty = case args of
-              RecCon flds ->  mk_fun_ty (noLoc (HsRecTy noExt (unLoc flds))) res_ty
-              PrefixCon pos_args -> foldr mk_fun_ty res_ty (map hsThing pos_args)
-              InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
+              RecCon flds ->  mkFunTy (noLoc (HsRecTy noExt (unLoc flds))) res_ty
+              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsThing pos_args)
+              InfixCon arg1 arg2 -> (hsThing arg1) `mkFunTy` ((hsThing arg2) `mkFunTy` res_ty)
 
-   -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy HsUnrestrictedArrow a b
+   mkFunTy a b = noLoc (HsFunTy noExt HsUnrestrictedArrow a b)
 
 getGADTConType (ConDeclH98 {}) = panic "getGADTConType"
   -- Should only be called on ConDeclGADT
@@ -226,12 +224,12 @@ getGADTConTypeG (ConDeclGADT { con_forall = L _ has_forall
 
 --   tau_ty :: LHsType DocNameI
    tau_ty = case args of
-              RecCon flds ->  mk_fun_ty (noLoc (HsRecTy noExt (unLoc flds))) res_ty
-              PrefixCon pos_args -> foldr mk_fun_ty res_ty (map hsThing pos_args)
-              InfixCon arg1 arg2 -> (hsThing arg1) `mk_fun_ty` ((hsThing arg2) `mk_fun_ty` res_ty)
+              RecCon flds ->  mkFunTy (noLoc (HsRecTy noExt (unLoc flds))) res_ty
+              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsThing pos_args)
+              InfixCon arg1 arg2 -> (hsThing arg1) `mkFunTy` ((hsThing arg2) `mkFunTy` res_ty)
 
-   -- mk_fun_ty :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
-   mk_fun_ty a b = nlHsFunTy HsUnrestrictedArrow a b
+   -- mkFunTy :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
+   mkFunTy a b = noLoc (HsFunTy noExt HsUnrestrictedArrow a b)
 
 getGADTConTypeG (ConDeclH98 {}) = panic "getGADTConTypeG"
   -- Should only be called on ConDeclGADT
