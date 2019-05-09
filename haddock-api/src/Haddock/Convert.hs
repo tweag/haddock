@@ -609,8 +609,8 @@ synifyType _ vs (AppTy t1 t2) = let
   s1 = synifyType WithinType vs t1
   s2 = synifyType WithinType vs t2
   in noLoc $ HsAppTy noExt s1 s2
-synifyType s vs funty@(FunTy InvisArg _ _) = synifyForAllType s Inferred vs funty
-synifyType _ vs       (FunTy VisArg t1 t2) = let
+synifyType s vs funty@(FunTy (ArgType InvisArg _) _) = synifyForAllType s Inferred vs funty
+synifyType _ vs       (FunTy (ArgType VisArg t1) t2) = let
   s1 = synifyType WithinType vs t1
   s2 = synifyType WithinType vs t2
   in noLoc $ HsFunTy noExt s1 s2
@@ -723,7 +723,7 @@ noKindTyVars ts ty
                  _ -> noKindTyVars ts f
     in unionVarSets (func : args)
 noKindTyVars ts (ForAllTy _ t) = noKindTyVars ts t
-noKindTyVars ts (FunTy _ t1 t2) = noKindTyVars ts t1 `unionVarSet` noKindTyVars ts t2
+noKindTyVars ts (FunTy (ArgType _ t1) t2) = noKindTyVars ts t1 `unionVarSet` noKindTyVars ts t2
 noKindTyVars ts (CastTy t _) = noKindTyVars ts t
 noKindTyVars _ _ = emptyVarSet
 
@@ -856,5 +856,5 @@ tcSplitPhiTyPreserveSynonyms ty0 = split ty0 []
 
 -- | See Note [Invariant: Never expand type synonyms]
 tcSplitPredFunTyPreserveSynonyms_maybe :: Type -> Maybe (PredType, Type)
-tcSplitPredFunTyPreserveSynonyms_maybe (FunTy InvisArg arg res) = Just (arg, res)
+tcSplitPredFunTyPreserveSynonyms_maybe (FunTy (ArgType InvisArg arg) res) = Just (arg, res)
 tcSplitPredFunTyPreserveSynonyms_maybe _ = Nothing
