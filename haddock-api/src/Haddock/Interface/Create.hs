@@ -1146,7 +1146,7 @@ extractPatternSyn nm t tvs cons =
         typ'' = noLoc (HsQualTy noExtField (noLoc []) typ')
     in PatSynSig noExtField [noLoc nm] (mkEmptyImplicitBndrs typ'')
 
-  longArrow :: (XFunTy name ~ NoExt) => [LHsType name] -> LHsType name -> LHsType name
+  longArrow :: (XFunTy name ~ NoExtField) => [LHsType name] -> LHsType name -> LHsType name
   longArrow inputs output = foldr (\x y -> noLoc (HsFunTy noExtField HsUnrestrictedArrow x y)) output inputs
 
   data_ty con
