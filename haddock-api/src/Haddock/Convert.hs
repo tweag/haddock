@@ -139,7 +139,7 @@ tyThingToLHsDecl prr t = case t of
 
   -- a data-constructor alone just gets rendered as a function:
   AConLike (RealDataCon dc) -> allOK $ SigD noExtField (TypeSig noExtField [synifyName dc]
-    (synifySigWcType ImplicitizeForAll [] (dataConUserType dc)))
+    (synifySigWcType ImplicitizeForAll [] (dataConWrapperType dc)))
 
   AConLike (PatSynCon ps) ->
     allOK . SigD noExtField $ PatSynSig noExtField [synifyName ps] (synifyPatSynSigType ps)
