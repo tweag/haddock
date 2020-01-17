@@ -240,7 +240,7 @@ ppCtor dflags dat subdocs con@ConDeclH98 {}
   -- AZ:TODO get rid of the concatMap
    = concatMap (lookupCon dflags subdocs) [con_name con] ++ f (getConArgs con)
     where
-        f (PrefixCon args) = [typeSig name $ (map hsThing args) ++ [resType]]
+        f (PrefixCon args) = [typeSig name $ (map hsScaledThing args) ++ [resType]]
         f (InfixCon a1 a2) = f $ PrefixCon [a1,a2]
         f (RecCon (L _ recs)) = f (PrefixCon $ map (hsLinear . cd_fld_type . unLoc) recs) ++ concat
                           [(concatMap (lookupCon dflags subdocs . noLoc . extFieldOcc . unLoc) (cd_fld_names r)) ++

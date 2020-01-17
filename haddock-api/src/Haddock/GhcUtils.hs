@@ -211,8 +211,8 @@ getGADTConType (ConDeclGADT { con_forall = L _ has_forall
 --   tau_ty :: LHsType DocNameI
    tau_ty = case args of
               RecCon flds ->  mkFunTy (noLoc (HsRecTy noExtField (unLoc flds))) res_ty
-              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsThing pos_args)
-              InfixCon arg1 arg2 -> (hsThing arg1) `mkFunTy` ((hsThing arg2) `mkFunTy` res_ty)
+              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsScaledThing pos_args)
+              InfixCon arg1 arg2 -> (hsScaledThing arg1) `mkFunTy` ((hsScaledThing arg2) `mkFunTy` res_ty)
 
    mkFunTy a b = noLoc (HsFunTy noExtField HsUnrestrictedArrow a b)
 
@@ -245,8 +245,8 @@ getGADTConTypeG (ConDeclGADT { con_forall = L _ has_forall
 --   tau_ty :: LHsType DocNameI
    tau_ty = case args of
               RecCon flds ->  mkFunTy (noLoc (HsRecTy noExtField (unLoc flds))) res_ty
-              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsThing pos_args)
-              InfixCon arg1 arg2 -> (hsThing arg1) `mkFunTy` ((hsThing arg2) `mkFunTy` res_ty)
+              PrefixCon pos_args -> foldr mkFunTy res_ty (map hsScaledThing pos_args)
+              InfixCon arg1 arg2 -> (hsScaledThing arg1) `mkFunTy` ((hsScaledThing arg2) `mkFunTy` res_ty)
 
    -- mkFunTy :: LHsType DocNameI -> LHsType DocNameI -> LHsType DocNameI
    mkFunTy a b = noLoc (HsFunTy noExtField HsUnrestrictedArrow a b)

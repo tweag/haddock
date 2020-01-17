@@ -489,8 +489,9 @@ subordinates instMap decl = case decl of
 -- | Extract constructor argument docs from inside constructor decls.
 conArgDocs :: ConDecl GhcRn -> Map Int HsDocString
 conArgDocs con = case getConArgs con of
-                   PrefixCon args -> go 0 (map (unLoc . hsThing) args ++ ret)
-                   InfixCon arg1 arg2 -> go 0 ([unLoc (hsThing arg1), unLoc (hsThing arg2)] ++ ret)
+                   PrefixCon args -> go 0 (map (unLoc . hsScaledThing) args ++ ret)
+                   InfixCon arg1 arg2 -> go 0 ([unLoc (hsScaledThing arg1),
+                                                unLoc (hsScaledThing arg2)] ++ ret)
                    RecCon _ -> go 1 ret
   where
     go n (HsDocTy _ _ (L _ ds) : tys) = M.insert n ds $ go (n+1) tys
@@ -1135,9 +1136,9 @@ extractPatternSyn nm t tvs cons =
   extract con =
     let args =
           case getConArgs con of
-            PrefixCon args' -> (map hsThing args')
+            PrefixCon args' -> (map hsScaledThing args')
             RecCon (L _ fields) -> cd_fld_type . unLoc <$> fields
-            InfixCon arg1 arg2 -> map hsThing [arg1, arg2]
+            InfixCon arg1 arg2 -> map hsScaledThing [arg1, arg2]
         typ = longArrow args (data_ty con)
         typ' =
           case con of

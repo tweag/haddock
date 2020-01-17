@@ -776,7 +776,7 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
           | hasArgDocs -> header_ <+> ppOcc
           | otherwise -> hsep [ header_
                               , ppOcc
-                              , hsep (map ((ppLParendType unicode) . hsThing) args)
+                              , hsep (map ((ppLParendType unicode) . hsScaledThing) args)
                               ]
 
         -- Record constructor, e.g. 'Identity { runIdentity :: a }'
@@ -786,9 +786,9 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
         InfixCon arg1 arg2
           | hasArgDocs -> header_ <+> ppOcc
           | otherwise -> hsep [ header_
-                              , ppLParendType unicode (hsThing arg1)
+                              , ppLParendType unicode (hsScaledThing arg1)
                               , ppOccInfix
-                              , ppLParendType unicode (hsThing arg2)
+                              , ppLParendType unicode (hsScaledThing arg2)
                               ]
 
       ConDeclGADT{}
@@ -808,10 +808,10 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
         (_, RecCon (L _ fields))             -> doRecordFields fields
 
         -- Any GADT or a regular H98 prefix data constructor
-        (_, PrefixCon args)     | hasArgDocs -> doConstrArgsWithDocs (map hsThing args)
+        (_, PrefixCon args)     | hasArgDocs -> doConstrArgsWithDocs (map hsScaledThing args)
 
         -- An infix H98 data constructor
-        (_, InfixCon arg1 arg2) | hasArgDocs -> doConstrArgsWithDocs (map hsThing [arg1,arg2])
+        (_, InfixCon arg1 arg2) | hasArgDocs -> doConstrArgsWithDocs (map hsScaledThing [arg1,arg2])
 
         _ -> empty
 
