@@ -58,7 +58,7 @@ import Data.Maybe                            ( catMaybes, maybeToList )
 
 
 -- | Whether or not to default 'RuntimeRep' variables to 'LiftedRep'. Check
--- out Note [Defaulting RuntimeRep variables] in IfaceType.hs for the
+-- out Note [Defaulting RuntimeRep variables] in GHC.Iface.Type for the
 -- motivation.
 data PrintRuntimeReps = ShowRuntimeRep | HideRuntimeRep deriving Show
 
