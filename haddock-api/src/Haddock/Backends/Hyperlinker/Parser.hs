@@ -261,7 +261,6 @@ classify tok =
     ITlarrow            {} -> TkGlyph
     ITrarrow            {} -> TkGlyph
     ITlolly             {} -> TkGlyph
-    ITlolly2               -> TkGlyph
     ITat                   -> TkGlyph
     ITtilde                -> TkGlyph
     ITdarrow            {} -> TkGlyph
