@@ -129,7 +129,7 @@ tyThingToLHsDecl prr t = case t of
          , tcdATs = atFamDecls
          , tcdATDefs = catMaybes atDefFamDecls
          , tcdDocs = [] --we don't have any docs at this point
-         , tcdCExt = placeHolderNamesTc }
+         , tcdCExt = emptyNameSet }
     | otherwise
     -> synifyTyCon prr Nothing tc >>= allOK . TyClD noExtField
 
@@ -208,7 +208,7 @@ synifyTyCon prr _coax tc
                                                -- we have their kind accurately:
                                       , dd_cons = []  -- No constructors
                                       , dd_derivs = noLoc [] }
-           , tcdDExt = DataDeclRn False placeHolderNamesTc }
+           , tcdDExt = DataDeclRn False emptyNameSet }
   where
     -- tyConTyVars doesn't work on fun/prim, but we can make them up:
     mk_hs_tv realKind fakeTyVar
@@ -301,7 +301,7 @@ synifyTyCon _prr coax tc
         DataDecl { tcdLName = name, tcdTyVars = tyvars
                  , tcdFixity = synifyFixity name
                  , tcdDataDefn = defn
-                 , tcdDExt = DataDeclRn False placeHolderNamesTc }
+                 , tcdDExt = DataDeclRn False emptyNameSet }
   dataConErrs -> Left $ unlines dataConErrs
 
 -- | In this module, every TyCon being considered has come from an interface
