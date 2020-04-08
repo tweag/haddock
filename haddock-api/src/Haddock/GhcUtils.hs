@@ -31,7 +31,7 @@ import NameSet
 import Module
 import GHC.Driver.Types
 import GHC
-import Class
+import GHC.Core.Class
 import GHC.Driver.Session
 import Multiplicity
 import SrcLoc    ( advanceSrcLoc )
@@ -39,8 +39,8 @@ import Var       ( VarBndr(..), TyVarBinder, tyVarKind, updateTyVarKind,
                    isInvisibleArgFlag )
 import VarSet    ( VarSet, emptyVarSet )
 import VarEnv    ( TyVarEnv, extendVarEnv, elemVarEnv, emptyVarEnv )
-import TyCoRep   ( Type(..) )
-import Type      ( isRuntimeRepVar )
+import GHC.Core.TyCo.Rep ( Type(..) )
+import GHC.Core.Type     ( isRuntimeRepVar )
 import TysWiredIn( liftedRepDataConTyCon )
 
 import           StringBuffer ( StringBuffer )
