@@ -41,7 +41,7 @@ import Name
 import BooleanFormula
 import RdrName ( rdrNameOcc )
 import Outputable ( panic )
-import Multiplicity
+import GHC.Core.Multiplicity
 
 -- | Pretty print a declaration
 ppDecl :: Bool                                     -- ^ print summary info only

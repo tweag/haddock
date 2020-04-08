@@ -33,7 +33,7 @@ import GHC.Driver.Types
 import GHC
 import GHC.Core.Class
 import GHC.Driver.Session
-import Multiplicity
+import GHC.Core.Multiplicity
 import SrcLoc    ( advanceSrcLoc )
 import Var       ( VarBndr(..), TyVarBinder, tyVarKind, updateTyVarKind,
                    isInvisibleArgFlag )

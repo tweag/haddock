@@ -57,7 +57,7 @@ import FastString ( unpackFS, bytesFS )
 import BasicTypes ( StringLiteral(..), SourceText(..), PromotionFlag(..) )
 import qualified Outputable as O
 
-import Multiplicity
+import GHC.Core.Multiplicity
 
 
 -- | Use a 'TypecheckedModule' to produce an 'Interface'.

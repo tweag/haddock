@@ -52,7 +52,7 @@ import Haddock.Types
 import Haddock.Interface.Specialize
 import Haddock.GhcUtils                      ( orderedFVs, defaultRuntimeRepVars )
 
-import Multiplicity
+import GHC.Core.Multiplicity
 
 import Data.Maybe                            ( catMaybes, maybeToList )
 

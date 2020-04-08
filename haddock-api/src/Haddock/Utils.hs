@@ -90,7 +90,7 @@ import qualified System.Posix.Internals
 
 import MonadUtils ( MonadIO(..) )
 
-import Multiplicity
+import GHC.Core.Multiplicity
 
 
 --------------------------------------------------------------------------------
