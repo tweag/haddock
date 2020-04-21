@@ -26,19 +26,19 @@ import Haddock.Types( DocName, DocNameI )
 import Exception
 import FV
 import Outputable ( Outputable, panic, showPpr )
-import Name
-import NameSet
-import Module
+import GHC.Types.Name
+import GHC.Types.Name.Set
+import GHC.Types.Module
 import GHC.Driver.Types
 import GHC
 import GHC.Core.Class
 import GHC.Driver.Session
 import GHC.Core.Multiplicity
-import SrcLoc    ( advanceSrcLoc )
-import Var       ( VarBndr(..), TyVarBinder, tyVarKind, updateTyVarKind,
-                   isInvisibleArgFlag )
-import VarSet    ( VarSet, emptyVarSet )
-import VarEnv    ( TyVarEnv, extendVarEnv, elemVarEnv, emptyVarEnv )
+import GHC.Types.SrcLoc  ( advanceSrcLoc )
+import GHC.Types.Var     ( VarBndr(..), TyVarBinder, tyVarKind, updateTyVarKind,
+                           isInvisibleArgFlag )
+import GHC.Types.Var.Set ( VarSet, emptyVarSet )
+import GHC.Types.Var.Env ( TyVarEnv, extendVarEnv, elemVarEnv, emptyVarEnv )
 import GHC.Core.TyCo.Rep ( Type(..) )
 import GHC.Core.Type     ( isRuntimeRepVar )
 import TysWiredIn( liftedRepDataConTyCon )
@@ -627,10 +627,10 @@ orderedFVs vs tys =
 -- For example, 'tyCoVarsOfTypeList' reports an incorrect order for the type
 -- of 'const :: a -> b -> a':
 --
--- >>> import Name
+-- >>> import GHC.Types.Name
 -- >>> import TyCoRep
 -- >>> import TysPrim
--- >>> import Var
+-- >>> import GHC.Types.Var
 -- >>> a = TyVarTy alphaTyVar
 -- >>> b = TyVarTy betaTyVar
 -- >>> constTy = mkFunTys [a, b] a

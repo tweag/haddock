@@ -13,7 +13,7 @@ import Haddock.Syb
 import Haddock.Types
 
 import GHC
-import Name
+import GHC.Types.Name
 import FastString
 import TysWiredIn ( listTyConName, unrestrictedFunTyConName )
 
