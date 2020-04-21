@@ -350,8 +350,6 @@ ppFamDecl doc instances decl unicode =
              , equals
              , ppType unicode (unLoc rhs)
              ]
-    ppFamDeclEqn (XHsImplicitBndrs nec) = noExtCon nec
-    ppFamDeclEqn (HsIB { hsib_body = XFamEqn nec}) = noExtCon nec
 
     instancesBit = ppDocInstances unicode instances
 
@@ -359,7 +357,6 @@ ppFamDecl doc instances decl unicode =
 ppFamHeader :: FamilyDecl DocNameI  -- ^ family header to print
               -> Bool                 -- ^ unicode
               -> LaTeX
-ppFamHeader (XFamilyDecl nec) _ = noExtCon nec
 ppFamHeader (FamilyDecl { fdLName = L _ name
                         , fdTyVars = tvs
                         , fdInfo = info
@@ -379,7 +376,6 @@ ppFamHeader (FamilyDecl { fdLName = L _ name
       NoSig _               -> empty
       KindSig _ kind        -> dcolon unicode <+> ppLKind unicode kind
       TyVarSig _ (L _ bndr) -> equals <+> ppHsTyVarBndr unicode bndr
-      XFamilyResultSig nec  -> noExtCon nec
 
     injAnn = case injectivity of
       Nothing -> empty
@@ -798,7 +794,6 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
                             -- ++AZ++ make this prepend "{..}" when it is a record style GADT
                             , ppLType unicode (getGADTConType con)
                             ]
-      XConDecl nec -> noExtCon nec
 
     fieldPart = case (con, getConArgs con) of
         -- Record style GADTs
@@ -832,7 +827,6 @@ ppSideBySideConstr subdocs unicode leader (L _ con) =
         [ l <+> text "\\enspace" <+> r
         | (l,r) <- ppSubSigLike unicode (unLoc (getGADTConType con)) argDocs subdocs (dcolon unicode)
         ]
-      XConDecl nec -> noExtCon nec
 
 
     -- don't use "con_doc con", in case it's reconstructed from a .hi file,
@@ -852,7 +846,6 @@ ppSideBySideField subdocs unicode (ConDeclField _ names ltype _) =
     -- don't use cd_fld_doc for same reason we don't use con_doc above
     -- Where there is more than one name, they all have the same documentation
     mbDoc = lookup (extFieldOcc $ unLoc $ head names) subdocs >>= fmap _doc . combineDocumentation . fst
-ppSideBySideField _ _ (XConDeclField nec) = noExtCon nec
 
 
 -- | Pretty-print a bundled pattern synonym
@@ -1019,7 +1012,6 @@ ppHsTyVarBndr :: Bool -> HsTyVarBndr DocNameI -> LaTeX
 ppHsTyVarBndr _ (UserTyVar _ (L _ name)) = ppDocName name
 ppHsTyVarBndr unicode (KindedTyVar _ (L _ name) kind) =
   parens (ppDocName name) <+> dcolon unicode <+> ppLKind unicode kind
-ppHsTyVarBndr _ (XTyVarBndr nec) = noExtCon nec
 
 ppLKind :: Bool -> LHsKind DocNameI -> LaTeX
 ppLKind unicode y = ppKind unicode (unLoc y)

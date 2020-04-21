@@ -211,7 +211,6 @@ renameFamilyResultSig (L loc (KindSig _ ki))
 renameFamilyResultSig (L loc (TyVarSig _ bndr))
     = do { bndr' <- renameLTyVarBndr bndr
          ; return (L loc (TyVarSig noExtField bndr')) }
-renameFamilyResultSig (L _ (XFamilyResultSig nec)) = noExtCon nec
 
 renameInjectivityAnn :: LInjectivityAnn GhcRn -> RnM (LInjectivityAnn DocNameI)
 renameInjectivityAnn (L loc (InjectivityAnn lhs rhs))
@@ -311,7 +310,6 @@ renameLHsQTyVars (HsQTvs { hsq_explicit = tvs })
   = do { tvs' <- mapM renameLTyVarBndr tvs
        ; return (HsQTvs { hsq_ext = noExtField
                         , hsq_explicit = tvs' }) }
-renameLHsQTyVars (XLHsQTyVars nec) = noExtCon nec
 
 renameLTyVarBndr :: LHsTyVarBndr GhcRn -> RnM (LHsTyVarBndr DocNameI)
 renameLTyVarBndr (L loc (UserTyVar x (L l n)))
@@ -321,7 +319,6 @@ renameLTyVarBndr (L loc (KindedTyVar x (L lv n) kind))
   = do { n' <- rename n
        ; kind' <- renameLKind kind
        ; return (L loc (KindedTyVar x (L lv n') kind')) }
-renameLTyVarBndr (L _ (XTyVarBndr _ )) = error "haddock:renameLTyVarBndr"
 
 renameLContext :: Located [LHsType GhcRn] -> RnM (Located [LHsType DocNameI])
 renameLContext (L loc context) = do
@@ -412,7 +409,6 @@ renameTyClD d = case d of
                       , tcdFixity = fixity
                       , tcdFDs = lfundeps', tcdSigs = lsigs', tcdMeths= emptyBag
                       , tcdATs = ats', tcdATDefs = at_defs', tcdDocs = [], tcdCExt = noExtField })
-  XTyClDecl nec -> noExtCon nec
 
   where
     renameLFunDep (L loc (xs, ys)) = do
@@ -438,7 +434,6 @@ renameFamilyDecl (FamilyDecl { fdInfo = info, fdLName = lname
                        , fdFixity = fixity
                        , fdResultSig = result'
                        , fdInjectivityAnn = injectivity' })
-renameFamilyDecl (XFamilyDecl nec) = noExtCon nec
 
 
 renamePseudoFamilyDecl :: PseudoFamilyDecl GhcRn
@@ -468,7 +463,6 @@ renameDataDefn (HsDataDefn { dd_ND = nd, dd_ctxt = lcontext, dd_cType = cType
                        , dd_ND = nd, dd_ctxt = lcontext', dd_cType = cType
                        , dd_kindSig = k', dd_cons = cons'
                        , dd_derivs = noLoc [] })
-renameDataDefn (XHsDataDefn nec) = noExtCon nec
 
 renameCon :: ConDecl GhcRn -> RnM (ConDecl DocNameI)
 renameCon decl@(ConDeclH98 { con_name = lname, con_ex_tvs = ltyvars
@@ -496,7 +490,6 @@ renameCon decl@(ConDeclGADT { con_names = lnames, con_qvars = ltyvars
       return (decl { con_g_ext = noExtField, con_names = lnames', con_qvars = ltyvars'
                    , con_mb_cxt = lcontext', con_args = details'
                    , con_res_ty = res_ty', con_doc = mbldoc' })
-renameCon (XConDecl nec) = noExtCon nec
 
 renameHsScaled :: HsScaled GhcRn (LHsType GhcRn)
                -> RnM (HsScaled DocNameI (LHsType DocNameI))
@@ -520,13 +513,11 @@ renameConDeclFieldField (L l (ConDeclField _ names t doc)) = do
   t'   <- renameLType t
   doc' <- mapM renameLDocHsSyn doc
   return $ L l (ConDeclField noExtField names' t' doc')
-renameConDeclFieldField (L _ (XConDeclField nec)) = noExtCon nec
 
 renameLFieldOcc :: LFieldOcc GhcRn -> RnM (LFieldOcc DocNameI)
 renameLFieldOcc (L l (FieldOcc sel lbl)) = do
   sel' <- rename sel
   return $ L l (FieldOcc sel' lbl)
-renameLFieldOcc (L _ (XFieldOcc _)) = error "haddock:renameLFieldOcc"
 
 renameSig :: Sig GhcRn -> RnM (Sig DocNameI)
 renameSig sig = case sig of
@@ -561,7 +552,6 @@ renameForD (ForeignExport _ lname ltype x) = do
   lname' <- renameL lname
   ltype' <- renameLSigType ltype
   return (ForeignExport noExtField lname' ltype' x)
-renameForD (XForeignDecl nec) = noExtCon nec
 
 
 renameInstD :: InstDecl GhcRn -> RnM (InstDecl DocNameI)
@@ -574,7 +564,6 @@ renameInstD (TyFamInstD { tfid_inst = d }) = do
 renameInstD (DataFamInstD { dfid_inst = d }) = do
   d' <- renameDataFamInstD d
   return (DataFamInstD { dfid_ext = noExtField, dfid_inst = d' })
-renameInstD (XInstDecl nec) = noExtCon nec
 
 renameDerivD :: DerivDecl GhcRn -> RnM (DerivDecl DocNameI)
 renameDerivD (DerivDecl { deriv_type = ty
@@ -586,7 +575,6 @@ renameDerivD (DerivDecl { deriv_type = ty
                     , deriv_type = ty'
                     , deriv_strategy = strat'
                     , deriv_overlap_mode = omode })
-renameDerivD (XDerivDecl nec) = noExtCon nec
 
 renameDerivStrategy :: DerivStrategy GhcRn -> RnM (DerivStrategy DocNameI)
 renameDerivStrategy StockStrategy    = pure StockStrategy
@@ -605,7 +593,6 @@ renameClsInstD (ClsInstDecl { cid_overlap_mode = omode
                       , cid_poly_ty = ltype', cid_binds = emptyBag
                       , cid_sigs = []
                       , cid_tyfam_insts = lATs', cid_datafam_insts = lADTs' })
-renameClsInstD (XClsInstDecl nec) = noExtCon nec
 
 
 renameTyFamInstD :: TyFamInstDecl GhcRn -> RnM (TyFamInstDecl DocNameI)
@@ -633,7 +620,6 @@ renameTyFamInstEqn eqn
                             , feqn_pats   = pats'
                             , feqn_fixity = fixity
                             , feqn_rhs    = rhs' }) }
-    rename_ty_fam_eqn (XFamEqn nec) = noExtCon nec
 
 renameTyFamDefltD :: TyFamDefltDecl GhcRn -> RnM (TyFamDefltDecl DocNameI)
 renameTyFamDefltD = renameTyFamInstD
@@ -659,7 +645,6 @@ renameDataFamInstD (DataFamInstDecl { dfid_eqn = eqn })
                             , feqn_pats   = pats'
                             , feqn_fixity = fixity
                             , feqn_rhs    = defn' }) }
-    rename_data_fam_eqn (XFamEqn nec) = noExtCon nec
 
 renameImplicit :: (in_thing -> RnM out_thing)
                -> HsImplicitBndrs GhcRn in_thing
@@ -668,7 +653,6 @@ renameImplicit rn_thing (HsIB { hsib_body = thing })
   = do { thing' <- rn_thing thing
        ; return (HsIB { hsib_body = thing'
                       , hsib_ext = noExtField }) }
-renameImplicit _ (XHsImplicitBndrs nec) = noExtCon nec
 
 renameWc :: (in_thing -> RnM out_thing)
          -> HsWildCardBndrs GhcRn in_thing
@@ -677,7 +661,6 @@ renameWc rn_thing (HsWC { hswc_body = thing })
   = do { thing' <- rn_thing thing
        ; return (HsWC { hswc_body = thing'
                       , hswc_ext = noExtField }) }
-renameWc _ (XHsWildCardBndrs nec) = noExtCon nec
 
 renameDocInstance :: DocInstance GhcRn -> RnM (DocInstance DocNameI)
 renameDocInstance (inst, idoc, L l n, m) = do

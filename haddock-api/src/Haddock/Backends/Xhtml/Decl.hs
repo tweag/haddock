@@ -328,8 +328,6 @@ ppFamDecl summary associated links instances fixities loc doc decl splice unicod
         , Nothing
         , []
         )
-    ppFamDeclEqn (XHsImplicitBndrs nec) = noExtCon nec
-    ppFamDeclEqn (HsIB { hsib_body = XFamEqn nec}) = noExtCon nec
 
 
 -- | Print a pseudo family declaration
@@ -354,7 +352,6 @@ ppFamHeader :: Bool                 -- ^ is a summary
             -> Bool                 -- ^ is an associated type
             -> FamilyDecl DocNameI  -- ^ family declaration
             -> Unicode -> Qualification -> Html
-ppFamHeader _ _ (XFamilyDecl nec) _ _ = noExtCon nec
 ppFamHeader summary associated (FamilyDecl { fdInfo = info
                                            , fdResultSig = L _ result
                                            , fdInjectivityAnn = injectivity
@@ -394,7 +391,6 @@ ppResultSig result unicode qual = case result of
     NoSig _               -> noHtml
     KindSig _ kind        -> dcolon unicode  <+> ppLKind unicode qual kind
     TyVarSig _ (L _ bndr) -> equals <+> ppHsTyVarBndr unicode qual bndr
-    XFamilyResultSig nec  -> noExtCon nec
 
 
 --------------------------------------------------------------------------------
@@ -752,7 +748,6 @@ ppShortDataDecl summary dataInst dataDecl pats unicode qual
     isH98     = case unLoc (head cons) of
                   ConDeclH98 {} -> True
                   ConDeclGADT{} -> False
-                  XConDecl{}    -> False
 
     pats1 = [ hsep [ keyword "pattern"
                    , hsep $ punctuate comma $ map (ppBinder summary . getOccName) lnames
@@ -786,7 +781,6 @@ ppDataDecl summary links instances fixities subdocs loc doc dataDecl pats
     isH98     = case unLoc (head cons) of
                   ConDeclH98 {} -> True
                   ConDeclGADT{} -> False
-                  XConDecl{}    -> False
 
     header_ = topDeclElem links loc splice [docname] $
              ppDataHeader summary dataDecl unicode qual <+> whereBit <+> fix
@@ -870,7 +864,6 @@ ppShortConstrParts summary dataInst con unicode qual
           , noHtml
           , noHtml
           )
-      XConDecl nec -> noExtCon nec
 
   where
     occ        = map (nameOccName . getName . unLoc) $ getConNamesI con
@@ -940,7 +933,6 @@ ppSideBySideConstr subdocs fixities unicode pkg qual (L _ con)
                               , ppLType unicode qual HideEmptyContexts (getGADTConType con)
                               , fixity
                               ]
-      XConDecl nec -> noExtCon nec
 
     fieldPart = case (con, getConArgs con) of
         -- Record style GADTs
@@ -969,7 +961,6 @@ ppSideBySideConstr subdocs fixities unicode pkg qual (L _ con)
       ConDeclGADT{} ->
         ppSubSigLike unicode qual (unLoc (getGADTConType con))
                      argDocs subdocs (dcolon unicode) HideEmptyContexts
-      XConDecl nec -> noExtCon nec
 
     -- don't use "con_doc con", in case it's reconstructed from a .hi file,
     -- or also because we want Haddock to do the doc-parsing, not GHC.
@@ -1013,14 +1004,12 @@ ppSideBySideField subdocs unicode qual (ConDeclField _ names ltype _) =
     -- don't use cd_fld_doc for same reason we don't use con_doc above
     -- Where there is more than one name, they all have the same documentation
     mbDoc = lookup (extFieldOcc $ unLoc $ head names) subdocs >>= combineDocumentation . fst
-ppSideBySideField _ _ _ (XConDeclField nec) = noExtCon nec
 
 
 ppShortField :: Bool -> Unicode -> Qualification -> ConDeclField DocNameI -> Html
 ppShortField summary unicode qual (ConDeclField _ names ltype _)
   = hsep (punctuate comma (map ((ppBinder summary) . rdrNameOcc . unLoc . rdrNameFieldOcc . unLoc) names))
     <+> dcolon unicode <+> ppLType unicode qual HideEmptyContexts ltype
-ppShortField _ _ _ (XConDeclField nec) = noExtCon nec
 
 
 -- | Pretty print an expanded pattern (for bundled patterns)
@@ -1127,7 +1116,6 @@ ppHsTyVarBndr _       qual (UserTyVar _ (L _ name)) =
 ppHsTyVarBndr unicode qual (KindedTyVar _ name kind) =
     parens (ppDocName qual Raw False (unLoc name) <+> dcolon unicode <+>
             ppLKind unicode qual kind)
-ppHsTyVarBndr _ _ (XTyVarBndr nec) = noExtCon nec
 
 ppLKind :: Unicode -> Qualification -> LHsKind DocNameI -> Html
 ppLKind unicode qual y = ppKind unicode qual (unLoc y)
