@@ -40,7 +40,6 @@ import GHC.Exts
 import GHC.Types.Name
 import BooleanFormula
 import GHC.Types.Name.Reader ( rdrNameOcc )
-import Outputable ( panic )
 import GHC.Core.Multiplicity
 
 -- | Pretty print a declaration
