@@ -734,7 +734,6 @@ noKindTyVars _ _ = emptyVarSet
 
 synifyMult :: [TyVar] -> Mult -> HsArrow GhcRn
 synifyMult vs t = case t of
-                    One  -> HsLinearArrow
                     Many -> HsUnrestrictedArrow
                     ty -> HsExplicitMult (synifyType WithinType vs ty)
 
