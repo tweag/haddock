@@ -35,8 +35,8 @@ import GHC.Core.Class
 import GHC.Driver.Session
 import GHC.Core.Multiplicity
 import GHC.Types.SrcLoc  ( advanceSrcLoc )
-import GHC.Types.Var     ( VarBndr(..), TyVarBinder, tyVarKind, updateTyVarKind,
-                           isInvisibleArgFlag )
+import GHC.Types.Var     ( Specificity, VarBndr(..), TyVarBinder
+                         , tyVarKind, updateTyVarKind, isInvisibleArgFlag )
 import GHC.Types.Var.Set ( VarSet, emptyVarSet )
 import GHC.Types.Var.Env ( TyVarEnv, extendVarEnv, elemVarEnv, emptyVarEnv )
 import GHC.Core.TyCo.Rep ( Type(..) )
@@ -179,6 +179,11 @@ hsImplicitBodyI (HsIB { hsib_body = body }) = body
 hsSigTypeI :: LHsSigType DocNameI -> LHsType DocNameI
 hsSigTypeI = hsImplicitBodyI
 
+mkHsForAllInvisTeleI ::
+  [LHsTyVarBndr Specificity DocNameI] -> HsForAllTelescope DocNameI
+mkHsForAllInvisTeleI invis_bndrs =
+  HsForAllInvis { hsf_xinvis = noExtField, hsf_invis_bndrs = invis_bndrs }
+
 getConArgsI :: ConDecl DocNameI -> HsConDeclDetails DocNameI
 getConArgsI d = con_args d
 
@@ -191,9 +196,8 @@ getGADTConType (ConDeclGADT { con_forall = L _ has_forall
                             , con_qvars = qtvs
                             , con_mb_cxt = mcxt, con_args = args
                             , con_res_ty = res_ty })
- | has_forall = noLoc (HsForAllTy { hst_fvf = ForallInvis
-                                  , hst_xforall = noExtField
-                                  , hst_bndrs = qtvs
+ | has_forall = noLoc (HsForAllTy { hst_xforall = noExtField
+                                  , hst_tele = mkHsForAllInvisTeleI qtvs
                                   , hst_body  = theta_ty })
  | otherwise  = theta_ty
  where
@@ -247,9 +251,8 @@ getGADTConTypeG (ConDeclGADT { con_forall = L _ has_forall
                             , con_qvars = qtvs
                             , con_mb_cxt = mcxt, con_args = args
                             , con_res_ty = res_ty })
- | has_forall = noLoc (HsForAllTy { hst_fvf = ForallInvis
-                                  , hst_xforall = noExtField
-                                  , hst_bndrs = qtvs
+ | has_forall = noLoc (HsForAllTy { hst_xforall = noExtField
+                                  , hst_tele = mkHsForAllInvisTele qtvs
                                   , hst_body  = theta_ty })
  | otherwise  = theta_ty
  where
@@ -313,8 +316,8 @@ reparenTypePrec = go
   go _ (HsExplicitTupleTy x tys) = HsExplicitTupleTy x (map reparenLType tys)
   go p (HsIParamTy x n ty)
     = paren p PREC_CTX $ HsIParamTy x n (reparenLType ty)
-  go p (HsForAllTy x fvf tvs ty)
-    = paren p PREC_CTX $ HsForAllTy x fvf (map (fmap reparenTyVar) tvs) (reparenLType ty)
+  go p (HsForAllTy x tele ty)
+    = paren p PREC_CTX $ HsForAllTy x (reparenHsForAllTelescope tele) (reparenLType ty)
   go p (HsQualTy x ctxt ty)
     = paren p PREC_FUN $ HsQualTy x (fmap (map reparenLType) ctxt) (reparenLType ty)
   go p (HsFunTy x w ty1 ty2)
@@ -353,6 +356,15 @@ reparenType = reparenTypePrec PREC_TOP
 -- | Add parenthesis around the types in a 'LHsType' (see 'reparenTypePrec')
 reparenLType :: (XParTy a ~ NoExtField) => LHsType a -> LHsType a
 reparenLType = fmap reparenType
+
+-- | Add parentheses around the types in an 'HsForAllTelescope' (see 'reparenTypePrec')
+reparenHsForAllTelescope :: (XParTy a ~ NoExtField)
+                         => HsForAllTelescope a -> HsForAllTelescope a
+reparenHsForAllTelescope (HsForAllVis x bndrs) =
+  HsForAllVis x (map (fmap reparenTyVar) bndrs)
+reparenHsForAllTelescope (HsForAllInvis x bndrs) =
+  HsForAllInvis x (map (fmap reparenTyVar) bndrs)
+reparenHsForAllTelescope v@XHsForAllTelescope{} = v
 
 -- | Add parenthesis around the types in a 'HsTyVarBndr' (see 'reparenTypePrec')
 reparenTyVar :: (XParTy a ~ NoExtField) => HsTyVarBndr flag a -> HsTyVarBndr flag a

@@ -228,11 +228,11 @@ renameArrow (HsExplicitMult p) = HsExplicitMult <$> renameLType p
 
 renameType :: HsType GhcRn -> RnM (HsType DocNameI)
 renameType t = case t of
-  HsForAllTy { hst_fvf = fvf, hst_bndrs = tyvars, hst_body = ltype } -> do
-    tyvars'   <- mapM renameLTyVarBndr tyvars
-    ltype'    <- renameLType ltype
-    return (HsForAllTy { hst_fvf = fvf, hst_xforall = noExtField
-                       , hst_bndrs = tyvars', hst_body = ltype' })
+  HsForAllTy { hst_tele = tele, hst_body = ltype } -> do
+    tele'  <- renameHsForAllTelescope tele
+    ltype' <- renameLType ltype
+    return (HsForAllTy { hst_xforall = noExtField
+                       , hst_tele = tele', hst_body = ltype' })
 
   HsQualTy { hst_ctxt = lcontext , hst_body = ltype } -> do
     lcontext' <- renameLContext lcontext
@@ -309,6 +309,13 @@ renameLHsQTyVars (HsQTvs { hsq_explicit = tvs })
   = do { tvs' <- mapM renameLTyVarBndr tvs
        ; return (HsQTvs { hsq_ext = noExtField
                         , hsq_explicit = tvs' }) }
+
+renameHsForAllTelescope :: HsForAllTelescope GhcRn -> RnM (HsForAllTelescope DocNameI)
+renameHsForAllTelescope tele = case tele of
+  HsForAllVis   x bndrs -> do bndrs' <- mapM renameLTyVarBndr bndrs
+                              pure $ HsForAllVis x bndrs'
+  HsForAllInvis x bndrs -> do bndrs' <- mapM renameLTyVarBndr bndrs
+                              pure $ HsForAllInvis x bndrs'
 
 renameLTyVarBndr :: LHsTyVarBndr flag GhcRn -> RnM (LHsTyVarBndr flag DocNameI)
 renameLTyVarBndr (L loc (UserTyVar x fl (L l n)))
