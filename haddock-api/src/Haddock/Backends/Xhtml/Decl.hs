@@ -1157,7 +1157,7 @@ patSigContext typ | hasNonEmptyContext typ && isFirstContextEmpty typ =  ShowEmp
     isFirstContextEmpty :: LHsType name -> Bool
     isFirstContextEmpty t =
       case unLoc t of
-        HsForAllTy _ _ _ s -> isFirstContextEmpty s
+        HsForAllTy _ _ s -> isFirstContextEmpty s
         HsQualTy _ cxt _ -> null (unLoc cxt)
         HsFunTy _ _ _ s    -> isFirstContextEmpty s
         _ -> False
